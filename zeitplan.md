@@ -7,7 +7,7 @@
 ### 1.2 Problem sichten
 - Problemumfang verstehen
 - CUDA Implementierung anschauen
-- MPI Implementierung anschauen
+- OpenMP Implementierung anschauen
 ### 1.3 Mit Alpaka auseinander setzen
 - Beispielprogramm implementieren z.B. Matrixmultiplikation
 ### 1.4 Programmstruktur erstellen
