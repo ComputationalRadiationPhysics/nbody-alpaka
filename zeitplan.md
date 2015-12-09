@@ -26,7 +26,7 @@
 - Füllen der Klassen und Methoden
 - Milestones
     - Kraftmatrix
-    - Summieren der Kräft
+    - Summieren der Kräfte
     - Aktualisieren der Geschwindigkeiten und Positionen
     - Evtl. Visualisierung (wenn zeitlich möglich)
 ## 3.Testphase(7.1.2016-14.1.2016)
