@@ -8,5 +8,5 @@
 
 ## Acceleration and velocity kernel
 - Ai = sum(j from 0 to n - 1){ Fij }
+- Pi += 0.5\*Ai\*dt^2 + Vi\*dt
 - Vi += Ai\*dt
-- Pi += (Vi\*dt)/2
