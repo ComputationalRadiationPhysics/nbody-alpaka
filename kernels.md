@@ -1,4 +1,7 @@
 # Kernels (first ideas)
+## Force matrix formula
+- Fij = ( G \* mi \* mj) \* (Pj - Pi) / abs(Pj - Pi)^3
+
 ## Force matrix (triangle method)
 - for i <= j
     - calculate Fij
