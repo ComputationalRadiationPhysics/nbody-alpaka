@@ -7,6 +7,9 @@
     - do nothing (Good for CPU, mediocre for OpenMP and bad for GPU)
 
 ## Acceleration and velocity kernel
-- Ai = sum(j from 0 to n - 1){ Fij }
-- Pi += 0.5\*Ai\*dt^2 + Vi\*dt
-- Vi += Ai\*dt
+- Acceleration of body i
+    - Ai = 1/mi \* sum(j from 0 to n - 1){ Fij }
+- Position of body i
+    - Pi += 0.5\*Ai\*dt^2 + Vi\*dt
+- Velocity of body i
+    - Vi += Ai\*dt
