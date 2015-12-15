@@ -31,7 +31,7 @@ namespace types {
  * @tparam TElem type of the coordinates
  */
 template<
-    unsigned int NDim,
+    std::size_t NDim,
     typename TElem
 >
 class Vector
@@ -57,7 +57,7 @@ public:
      */
     Vector(const TElem initialElement)
     {
-        for( unsigned int i = 0; i < NDim; i++ )
+        for( std::size_t i = 0; i < NDim; i++ )
         {
             this->coord[ i ] = initialElement;
         }
@@ -74,7 +74,7 @@ public:
      */
     Vector( const TElem initialData[ NDim ] )
     {
-        for( unsigned int i = 0; i < NDim; i++ )
+        for( std::size_t i = 0; i < NDim; i++ )
         {
             this->coord[ i ] = initialData[ i ];
         }
@@ -112,7 +112,7 @@ public:
     -> decltype( sqrt( coord[0] ) )
     {
         TElem len = 0;
-        for( unsigned int index = 0; index < NDim; index++ )
+        for( std::size_t index = 0; index < NDim; index++ )
         {
             len += this->coord[ index ] * this->coord[ index ];
         }
@@ -140,7 +140,7 @@ public:
     operator=( Vector<NDim,TElemOther> const & other )
     -> Vector< NDim, TElem >&
     {
-        for(unsigned int index = 0; index < NDim; index++) {
+        for(std::size_t index = 0; index < NDim; index++) {
             this->coord[ index ] = (TElem) other[ index ];
         }
         return *this;
@@ -162,7 +162,7 @@ public:
     -> Vector<NDim, decltype( coord[0]/other ) >
     {
         Vector< NDim, decltype( coord[0]/other ) > result;
-        for( unsigned int index = 0; index < NDim; index++ )
+        for( std::size_t index = 0; index < NDim; index++ )
         {
             result[ index ] = this->coord[ index ] / other;
         }
@@ -185,7 +185,7 @@ public:
     -> Vector<NDim, decltype( coord[0] + other[0] ) >
     {
         Vector< NDim, decltype( coord[0] + other[0] ) > result;
-        for( unsigned int i = 0 ; i < NDim ; i++ ) {
+        for( std::size_t i = 0 ; i < NDim ; i++ ) {
             result[ i ] = this->coord[ i ] + other[ i ];
         }
         return result;
@@ -206,7 +206,7 @@ public:
     operator+= ( const Vector< NDim, TElemOther >& other )
     -> Vector<NDim, TElem>&
     {
-        for( unsigned int i = 0; i < NDim; i++ ) {
+        for( std::size_t i = 0; i < NDim; i++ ) {
             this->coord[ i ] = ( TElem )( this->coord[ i ] + other[ i ] );
         }
         return *this;
@@ -231,7 +231,7 @@ public:
     >
     {
         Vector< NDim, decltype( coord[0] - other[0] ) > result;
-        for(unsigned int i = 0; i < NDim; i++)
+        for(std::size_t i = 0; i < NDim; i++)
         {
             result[ i ] = this->coord[ i ] - other[ i ];
         }
@@ -253,7 +253,7 @@ public:
     >
     {
         Vector< NDim , TElem > result;
-        for( unsigned int i = 0; i < NDim; i++ )
+        for( std::size_t i = 0; i < NDim; i++ )
         {
             result[i] = - this->coord[ i ];
         }
@@ -278,7 +278,7 @@ public:
     >
     {
         Vector< NDim , decltype( factor * coord[0] ) > result;
-        for( unsigned int i = 0; i < NDim; i++ ) {
+        for( std::size_t i = 0; i < NDim; i++ ) {
             result[i] = this->coord[ i ] * factor;
         }
         return result;
@@ -293,7 +293,7 @@ public:
      * @return A reference to the coordinate specified by index
      */
     TElem&
-    operator[]( const unsigned int index )
+    operator[]( const std::size_t index )
     {
         assert( index >= 0 && index <= NDim );
         return this->coord[ index ];
@@ -307,7 +307,7 @@ public:
      * @return The value of the coordinate specified by index
      */
     const TElem
-    operator[]( const unsigned int index ) const
+    operator[]( const std::size_t index ) const
     {
         assert( index >= 0 && index <= NDim );
         return this->coord[ index ];
@@ -325,7 +325,7 @@ public:
  * @return return value
  */
 template<
-    unsigned int NDim,
+    std::size_t NDim,
     typename TElem,
     typename TFactor
 >
