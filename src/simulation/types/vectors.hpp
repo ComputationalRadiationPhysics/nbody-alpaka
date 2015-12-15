@@ -342,4 +342,4 @@ operator*( const TFactor factor, const Vector<NDim, TElem> vector )
 
 } // namespace simulation
 
-} // nbody
+} // namespace nbody
