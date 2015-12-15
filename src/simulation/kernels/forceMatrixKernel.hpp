@@ -13,4 +13,16 @@
 
 #pragma once
 
+namespace nbody {
+
+namespace simulation {
+
+namespace kernels {
+
 class ForceMatrixKernel;
+
+} // namespace kernels
+
+} // namespace simulation
+
+} // namespace nbody

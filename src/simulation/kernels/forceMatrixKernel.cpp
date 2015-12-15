@@ -14,7 +14,13 @@
 #include <alpaka/alpaka.hpp>
 #include "../types/vectors.hpp"
 
-using Vector = nbody::simulation::types::Vector;
+namespace nbody {
+
+namespace simulation {
+
+namespace kernels {
+
+
 /** Class containing the Force Matrix Kernel
  *
  * This class contains the Force Matrix Kernel
@@ -39,7 +45,8 @@ class ForceMatrixKernel
     template<
         typename TAcc,
         std::size_t NDim,
-        typename TElem>
+        typename TElem,
+        typename TVector
     ALPAKA_FN_ACC
     auto operator()(
         TAcc const acc,
@@ -52,3 +59,9 @@ class ForceMatrixKernel
 
     }
 };
+
+} // namespace kernels
+
+} // namespace simulation
+
+} // namespace nbody
