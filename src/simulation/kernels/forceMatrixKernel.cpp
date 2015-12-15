@@ -8,7 +8,7 @@
  * @file forceMatrixKernel.cpp
  * @author Valentin Gehrke
  * @version 0.1
- * @date Tuesday, 15. December 2015 10:20
+ * @date Tuesday, 15. December 2015 11:00 
  */
 
 #include <alpaka/alpaka.hpp>
