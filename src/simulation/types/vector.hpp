@@ -105,18 +105,23 @@ public:
      * This method calculates the length of the vector using
      * the Pythagorean Theorem
      *
+     * @tparam TAcc Accelerator type (alpaka)
+     * @param acc current accelerator used
      * @return length of the vector
      */
+    template<
+        typename TAcc
+    >
     auto
-    length( ) const
-    -> decltype( sqrt( coord[0] ) )
+    length( TAcc const & acc ) const
+    -> decltype( alpaka::math::sqrt( acc, coord[0] ) )
     {
         TElem len = 0;
         for( std::size_t index = 0; index < NDim; index++ )
         {
             len += this->coord[ index ] * this->coord[ index ];
         }
-        return sqrt( len );
+        return alpaka::math::sqrt( acc, len );
     }
 
     /** vector normalization
@@ -124,11 +129,19 @@ public:
      * This method normalizes the vector by dividing its
      * coordinates by the length of the vector
      *
+     * @tparam TAcc Accelerator type (alpaka)
+     * @param acc current accelerator used
      * @return normalized vector
      */
+    template<
+        typename TAcc
+    >
     auto
-    normalize( ) const
-    -> Vector<NDim, decltype( coord[ 0 ] / sqrt( coord[ 0 ] ) ) >
+    normalize( TAcc const & acc ) const
+    -> Vector<
+        NDim,
+        decltype( coord[ 0 ] / alpaka::math::sqrt( acc, coord[ 0 ] ) )
+    >
     {
         return (*this) / this->length();
     }

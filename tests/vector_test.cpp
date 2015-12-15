@@ -1,7 +1,9 @@
-#include <iostream>
-#include "../src/simulation/types/vector.hpp"
+#include <iostream> // std::cout
+#include <alpaka/alpaka.hpp> // alpaka::acc::CpuSerial
+#include "../src/simulation/types/vector.hpp" // nbody::simulation::types::Vector
 
 using namespace nbody::simulation::types;
+using TAcc = alpaka::acc::AccCpuSerial
 
 template<
     std::size_t NDim,
@@ -20,6 +22,8 @@ int main( int argc, char *argv[] ) {
     Vector<3,float> aTimes2{2.0f,2.0f,2.0f};
     Vector<3,float> null(0.0f);
     Vector<2,float> b{3.0f,4.0f};
+
+    TAcc acc; //Accelerator for length and normalize
 
     if( 2*a == aTimes2 ) {
         std::cout << "Multiplication with scalar works." << std::endl;
@@ -51,13 +55,13 @@ int main( int argc, char *argv[] ) {
         std::cout << "Negation doesn't work." << std::endl;
     }
 
-    if( b.length() == 5.0f ) {
+    if( b.length(acc) == 5.0f ) {
         std::cout << "Length works." << std::endl;
     } else {
         std::cout << "Length doesn't work." << std::endl;
     }
 
-    if( b.normalize().length() == 1.0f ) {
+    if( b.normalize(acc).length(acc) == 1.0f ) {
         std::cout << "Normalization works." << std::endl;
     } else {
         std::cout << "Normalization doesn't work." << std::endl;
