@@ -3,7 +3,7 @@
  * This file defines the Vector type which defines some
  * basic operations on a vector
  *
- * @file vectors.cpp
+ * @file vector.cpp
  * @author Valentin Gehrke
  * @version 0.1
  * @date Monday, 14. December 2015 21:47
