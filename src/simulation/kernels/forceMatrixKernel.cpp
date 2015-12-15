@@ -12,7 +12,7 @@
  */
 
 #include <alpaka/alpaka.hpp>
-#include "../types/vectors.hpp"
+#include "../types/vector.hpp"
 
 namespace nbody {
 
@@ -42,17 +42,19 @@ class ForceMatrixKernel
      * @param bodiesMass array of the bodies' mass
      * @param forceMatrix Force Matrix as one dimensional array
      */
+    ALPAKA_NO_HOST_ACC_WARNING
     template<
         typename TAcc,
         std::size_t NDim,
         typename TElem,
-        typename TVector
+        typename TVector = nbody::simulation::types::Vector<NDim, TElem>
+    >
     ALPAKA_FN_ACC
     auto operator()(
         TAcc const acc,
-        Vector<NDim,TElem> const * const bodiesPosition,
+        TVector const * const bodiesPosition,
         TElem const * const bodiesMass,
-        Vector<NDim,TElem> * const forceMatrix
+        TVector * const forceMatrix
     )
     -> void
     {
