@@ -8,7 +8,7 @@ SET(PROJECT_ROOT "${CMAKE_CURRENT_LIST_DIR}/../..")
 # INCLUDE("${ALPAKA_ROOT}/cmake/common.cmake")
 # INCLUDE("${ALPAKA_ROOT}/cmake/dev.cmake")
 
-FIND_PACKAGE(Boost ">=1.56" QUIET COMPONENTS unit_test_framework)
+FIND_PACKAGE(Boost "1.56" QUIET COMPONENTS unit_test_framework)
 IF(NOT Boost_UNIT_TEST_FRAMEWORK_FOUND)
     MESSAGE(FATAL_ERROR "Required test dependency Boost.Test could not be found")
 ELSE()
