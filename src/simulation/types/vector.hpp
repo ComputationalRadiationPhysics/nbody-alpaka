@@ -13,6 +13,8 @@
 
 #include <cassert> // assert
 #include <cmath> // sqrt
+#include <initializer_list> // std::initializer_list
+#include <algorithm> // std::copy
 
 namespace nbody {
 
