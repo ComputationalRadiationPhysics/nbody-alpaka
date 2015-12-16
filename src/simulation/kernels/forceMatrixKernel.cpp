@@ -12,7 +12,8 @@
  */
 
 #include <alpaka/alpaka.hpp>
-#include "../types/vector.hpp"
+#include <simulation/types/vector.hpp> // Vector
+#include "forceMatrixKernel.hpp" // Class definition
 
 namespace nbody {
 
