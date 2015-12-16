@@ -11,8 +11,9 @@
  * @date Tuesday, 15. December 2015 11:00 
  */
 
+// alpaka, ALPAKA_FN_ACC, ALPAKA_NO_HOST_ACC_WARNING
 #include <alpaka/alpaka.hpp>
-#include "../types/vector.hpp"
+#include <simulation/types/vector.hpp> // Vector
 
 namespace nbody {
 
