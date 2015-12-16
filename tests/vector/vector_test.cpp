@@ -1,3 +1,11 @@
+/** Test for Vector class
+ *
+ * This file tests math operations with the Vector class
+ * 
+ * @file vector_test.cpp
+ * @author Valentin Gehrke
+ * @date Wednesday, 16. December 2015 19:38
+ */
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE VectorTest
 #include <iostream> // std::cout
