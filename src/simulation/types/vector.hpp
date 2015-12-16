@@ -6,13 +6,15 @@
  * @file vector.cpp
  * @author Valentin Gehrke
  * @version 0.1
- * @date Monday, 14. December 2015 21:47
+ * @date Wednesday, 16. December 2015 19:38 
  */
 
 #pragma once
 
 #include <cassert> // assert
 #include <cmath> // sqrt
+#include <initializer_list> // std::initializer_list
+#include <algorithm> // std::copy
 
 namespace nbody {
 

@@ -1,3 +1,11 @@
+/** Test for Vector class
+ *
+ * This file tests math operations with the Vector class
+ * 
+ * @file vector_test.cpp
+ * @author Valentin Gehrke
+ * @date Wednesday, 16. December 2015 19:38
+ */
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE VectorTest
 #include <simulation/types/vector.hpp> // Vector
@@ -61,5 +69,23 @@ BOOST_AUTO_TEST_CASE( absoluteSquared )
 
     BOOST_CHECK( a.absSq() == 25.0f );
 }
+
+BOOST_AUTO_TEST_CASE( assignment )
+{
+    Vector<2,float> a(1.0f),b;
+    b = a;
+    BOOST_CHECK( b == a );
+}
+
+BOOST_AUTO_TEST_CASE( assignmentWithParenthesis )
+{
+    Vector<2,float> a(1.0f);
+    Vector<2,float> b(a);
+
+    BOOST_CHECK( b == a );
+}
+
+
+
 
 BOOST_AUTO_TEST_SUITE_END()
