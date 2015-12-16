@@ -1,7 +1,5 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE VectorTest
-#include <iostream> // std::cout
-// nbody::simulation::types::Vector
 #include <simulation/types/vector.hpp> // Vector
 #include <boost/test/unit_test.hpp>
 
