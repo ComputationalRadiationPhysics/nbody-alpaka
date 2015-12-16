@@ -85,7 +85,4 @@ BOOST_AUTO_TEST_CASE( assignmentWithParenthesis )
     BOOST_CHECK( b == a );
 }
 
-
-
-
 BOOST_AUTO_TEST_SUITE_END()
