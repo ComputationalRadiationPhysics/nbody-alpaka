@@ -8,7 +8,7 @@
  * @file forceMatrixKernel.cpp
  * @author Valentin Gehrke
  * @version 0.1
- * @date Tuesday, 15. December 2015 11:00 
+ * @date Wednesday, 16. December 2015 20:19
  */
 
 // alpaka, ALPAKA_FN_ACC, ALPAKA_NO_HOST_ACC_WARNING
