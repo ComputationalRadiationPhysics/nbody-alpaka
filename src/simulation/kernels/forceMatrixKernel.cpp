@@ -33,6 +33,12 @@ class ForceMatrixKernel
      * This kernel
      * utilizes position and mass to calculate
      * gravitational forces between bodies.
+     * It utilizes a smoothnessFactor which counteracts
+     * potential singularities when distances become too
+     * small and therefor forces too high
+     *
+     * The gravitationalConstant is
+     * G = 6.674 * 10^−11 N*m^2/kg^2
      * 
      * @tparam TAcc Accelerator type
      * @tparam NDim Dimension of the vectors
@@ -41,6 +47,9 @@ class ForceMatrixKernel
      * @param bodiesPosition array of the bodies' position
      * @param bodiesMass array of the bodies' mass
      * @param forceMatrix Force Matrix as one dimensional array
+     * @param gravitationalConstant constant G
+     * @param smoothnessFactor Smoothness Factor
+     * 
      */
     ALPAKA_NO_HOST_ACC_WARNING
     template<
@@ -54,11 +63,46 @@ class ForceMatrixKernel
         TAcc const acc,
         TVector const * const bodiesPosition,
         TElem const * const bodiesMass,
-        TVector * const forceMatrix
-    )
+        TVector * const forceMatrix,
+        std::size_t numBodies,
+        TElem const gravitationalConstant,
+        TElem const smoothnessFactor
+    ) const
     -> void
     {
+        static_assert(
+                alpaka::dim::Dim<TAcc>::value == 2,
+                "This kernel required 2-dimensional indices");
 
+        auto const indexBodyInfluence(
+                alpaka::idx::getIdx<alpaka::Grid,alpaka::Threads>(acc)[0u]);
+        auto const indexBodyForce(
+                alpaka::idx::getIdx<alpaka::Grid,alpaka::Threads>(acc)[1u]);
+
+        if( indexBodyInfluence < numBodies || indexBodyForce < numBodies )
+        {
+            TVector const positionRelative(
+                    bodiesPosition[indexBodyInfluence] -
+                    bodiesPosition[indexBodyForce]);
+            
+            TElem const forceFactor(
+                    gravitationalConstant *
+                    bodiesMass[indexBodyForce] *
+                    bodiesMass[indexBodyInfluence] /
+                    (
+                        alpaka::math::pow(
+                            acc,
+                            positionRelative.absSq() +
+                            alpaka::math::pow(
+                                acc,
+                                smoothnessFactor,
+                                2.0f),
+                            1.5f)
+                    ));
+            
+            forceMatrix[ indexBodyForce * numBodies + indexBodyInfluence ] = 
+                forceFactor * positionRelative;
+        }
     }
 };
 
