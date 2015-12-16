@@ -146,7 +146,7 @@ public:
         typename TFactor
     >
     auto
-    operator/( const TFactor other ) const
+    operator/( TFactor const other ) const
     -> Vector<NDim, decltype( coord[0]/other ) >
     {
         Vector< NDim, decltype( coord[0]/other ) > result;
@@ -169,7 +169,7 @@ public:
         typename TElemOther
     >
     auto
-    operator+ ( const Vector<NDim, TElemOther> other ) const
+    operator+ ( Vector<NDim, TElemOther> const other ) const
     -> Vector<NDim, decltype( coord[0] + other[0] ) >
     {
         Vector< NDim, decltype( coord[0] + other[0] ) > result;
@@ -191,7 +191,7 @@ public:
         typename TElemOther
     >
     auto
-    operator+= ( const Vector< NDim, TElemOther >& other )
+    operator+= ( Vector< NDim, TElemOther > const other )
     -> Vector<NDim, TElem>&
     {
         for( std::size_t i = 0; i < NDim; i++ ) {
@@ -212,7 +212,7 @@ public:
         typename TElemOther
     >
     auto
-    operator- ( const Vector<NDim,TElemOther> other ) const
+    operator- ( Vector<NDim,TElemOther> const other ) const
     -> Vector<
         NDim,
         decltype( coord[0] - other[0] )
@@ -259,7 +259,7 @@ public:
         typename TFactor
     >
     auto
-    operator*( TFactor factor ) const
+    operator*( TFactor const factor ) const
     -> Vector<
         NDim,
         decltype( factor * coord[0] )
@@ -281,7 +281,7 @@ public:
      * @return A reference to the coordinate specified by index
      */
     TElem&
-    operator[]( const std::size_t index )
+    operator[]( std::size_t const index )
     {
         assert( index >= 0 && index <= NDim );
         return this->coord[ index ];
@@ -295,7 +295,7 @@ public:
      * @return The value of the coordinate specified by index
      */
     const TElem
-    operator[]( const std::size_t index ) const
+    operator[]( std::size_t const index ) const
     {
         assert( index >= 0 && index <= NDim );
         return this->coord[ index ];
@@ -321,7 +321,7 @@ Vector<
     NDim,
     TElem
 >
-operator*( const TFactor factor, const Vector<NDim, TElem> vector )
+operator*( TFactor const factor, Vector<NDim, TElem> const vector )
 {
     return vector.operator*( factor );
 }
