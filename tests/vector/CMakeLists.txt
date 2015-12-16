@@ -1,13 +1,14 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
 PROJECT("vector_test")
-SET(ALPAKA_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../alpaka")
-LIST(APPEND CMAKE_MODULE_PATH ${ALPAKA_ROOT})
-FIND_PACKAGE("alpaka" REQUIRED)
+SET(PROJECT_ROOT "${CMAKE_CURRENT_LIST_DIR}/../..")
+# SET(ALPAKA_ROOT "${PROJECT_ROOT}/alpaka")
+# LIST(APPEND CMAKE_MODULE_PATH ${ALPAKA_ROOT})
+# FIND_PACKAGE("alpaka" REQUIRED)
 
-INCLUDE("${ALPAKA_ROOT}/cmake/common.cmake")
-INCLUDE("${ALPAKA_ROOT}/cmake/dev.cmake")
+# INCLUDE("${ALPAKA_ROOT}/cmake/common.cmake")
+# INCLUDE("${ALPAKA_ROOT}/cmake/dev.cmake")
 
-FIND_PACKAGE(Boost ${_ALPAKA_BOOST_MIN_VER} QUIET COMPONENTS unit_test_framework)
+FIND_PACKAGE(Boost ">=1.56" QUIET COMPONENTS unit_test_framework)
 IF(NOT Boost_UNIT_TEST_FRAMEWORK_FOUND)
     MESSAGE(FATAL_ERROR "Required test dependency Boost.Test could not be found")
 ELSE()
@@ -17,11 +18,11 @@ ENDIF()
 
 ADD_DEFINITIONS("-std=c++11")
 
-SET(_NBODY_SRC_DIR "../src")
+SET(_NBODY_SRC_DIR "${PROJECT_ROOT}/src")
 
 INCLUDE_DIRECTORIES(
     ${_INCLUDE_DIRECTORIES_PRIVATE}
-    ${alpaka_INCLUDE_DIRS}
+    # ${alpaka_INCLUDE_DIRS}
     ${_NBODY_SRC_DIR})
 
 ADD_EXECUTABLE("vector_test.out" "vector_test.cpp")
