@@ -11,8 +11,8 @@
 
 #pragma once
 
-#include <cassert>
-#include <cmath>
+#include <cassert> // assert
+#include <cmath> // sqrt
 
 namespace nbody {
 
@@ -100,50 +100,23 @@ public:
         std::copy( initialData.begin(), initialData.end(), this->coord );
     }
 
-    /** return the length of the vector
+    /** absolute of Vector squared
      *
-     * This method calculates the length of the vector using
-     * the Pythagorean Theorem
+     * This method calculates the squared absolute scalar of 
+     * the vector using the Pythagorean Theorem
      *
-     * @tparam TAcc Accelerator type (alpaka)
-     * @param acc current accelerator used
-     * @return length of the vector
+     * @return absolute of Vector squared
      */
-    template<
-        typename TAcc
-    >
     auto
-    length( TAcc const & acc ) const
-    -> decltype( alpaka::math::sqrt( acc, coord[0] ) )
+    absSq() const
+    -> decltype( sqrt( coord[0] ) )
     {
         TElem len = 0;
         for( std::size_t index = 0; index < NDim; index++ )
         {
             len += this->coord[ index ] * this->coord[ index ];
         }
-        return alpaka::math::sqrt( acc, len );
-    }
-
-    /** vector normalization
-     *
-     * This method normalizes the vector by dividing its
-     * coordinates by the length of the vector
-     *
-     * @tparam TAcc Accelerator type (alpaka)
-     * @param acc current accelerator used
-     * @return normalized vector
-     */
-    template<
-        typename TAcc
-    >
-    auto
-    normalize( TAcc const & acc ) const
-    -> Vector<
-        NDim,
-        decltype( coord[ 0 ] / alpaka::math::sqrt( acc, coord[ 0 ] ) )
-    >
-    {
-        return (*this) / this->length();
+        return len;
     }
 
     template<
