@@ -1,5 +1,6 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE ForceMatrixTest
+#include <iostream> // std::cout, std::endl;
 #include <alpaka/alpaka.hpp>
 #include <simulation/kernels/forceMatrixKernel.hpp> // ForceMatrixKernel
 #include <simulation/types/vector.hpp> //Vector
@@ -7,35 +8,204 @@
 
 using Vector = nbody::simulation::types::Vector<2,float>;
 
+// equal operator for Vectors. Just for testing purposes.
+bool operator==(Vector const a, Vector const b) {
+    for(std::size_t i = 0; i < 2; i++) {
+        if(a[i] != b[i])
+            return false;
+    }
+    return true;
+}
+
+// Run kernel easily in tests
 auto
 createForceMatrix(
-        Vector const * const bodiesPosition,
-        float const * const bodiesMass,
+        Vector * bodiesPosition,
+        float * bodiesMass,
         std::size_t numBodies,
         float const gravitationalConstant,
-        float smoothnessFactor)
+        float const smoothnessFactor)
+-> Vector*
 {
-   using Kernel = nbody::simulation::kernels::ForceMatrixKernel;
-   using Acc = alpaka::acc::AccCpuSerial<alpaka::dim::DimInt<2u>, std::size_t>;
-   using Size = std::size_t;
-   Kernel kernel;
+    //using Kernel = nbody::simulation::kernels::ForceMatrixKernel;
+    using Kernel = nbody::simulation::kernels::TestKernel;
+    using Acc = alpaka::acc::AccCpuSerial<alpaka::dim::DimInt<2u>, std::size_t>;
+    using Size = std::size_t;
+    using Stream = alpaka::stream::StreamCpuSync;
 
-   auto devHost(alpaka::dev::DevManCpu::getDevByIdx(0));
+    /*** Kernel ***/
+    Kernel kernel;
 
-   alpaka::dev::Dev<TAcc> devAcc(alpaka::dev::DevMan<TAcc>::getDevByIdx(0));
+    /*** Devices ***/
+    auto devHost( alpaka::dev::DevManCpu::getDevByIdx( 0 ) );
 
-   Stream stream(devAcc);
+    alpaka::dev::Dev<Acc> devAcc( alpaka::dev::DevMan<Acc>::getDevByIdx( 0 ) );
 
-   alpaka::Vec<alpaka::dim::DimInt<1u>, Size> const extentBodies(numBodies);
-   alpaka::Vec<alpaka::dim::DimInt<2u>, Size> const extendForceMatrix(
-           numBodies,numBodies);
+    Stream stream(devAcc);
+
+    /*** Work extent ***/
+    alpaka::Vec<
+        alpaka::dim::DimInt<1u>,
+        Size
+    > const extentBodies( numBodies );
+
+    alpaka::Vec<
+        alpaka::dim::DimInt<2u>,
+        Size
+    > const extentForceMatrix( numBodies, numBodies );
+
+    alpaka::workdiv::WorkDivMembers<
+        alpaka::dim::DimInt<2u>,
+        Size
+    > const workDiv(
+        alpaka::workdiv::getValidWorkDiv< Acc >(
+            devAcc,
+            extentForceMatrix,
+            alpaka::Vec<
+                alpaka::dim::DimInt<2u>,
+                Size
+            >::ones(),
+            false,
+            alpaka::workdiv::GridBlockExtentSubDivRestrictions::Unrestricted
+        )
+    );
+
+    std::cout << workDiv << std::endl;
+
+    /*** Memory Host ***/
+    
+    alpaka::mem::view::ViewPlainPtr<
+        std::decay<decltype(devHost)>::type,
+        Vector,
+        alpaka::dim::DimInt<1u>,
+        Size>
+    hostBufBodiesPosition(
+            bodiesPosition,
+            devHost,
+            extentBodies);
+
+    alpaka::mem::view::ViewPlainPtr<
+        std::decay<decltype(devHost)>::type,
+        float,
+        alpaka::dim::DimInt<1u>,
+        Size>
+    hostBufBodiesMass(
+            bodiesMass,
+            devHost,
+            extentBodies);
+
+    Vector* forceMatrix = new Vector[ numBodies * numBodies ];
+
+    alpaka::mem::view::ViewPlainPtr<
+        std::decay<decltype(devHost)>::type,
+        Vector,
+        alpaka::dim::DimInt<2u>,
+        Size>
+    hostBufForceMatrix(
+            forceMatrix,
+            devHost,
+            extentForceMatrix);
+
+    /*** Memory Acc ***/
+    auto accBufBodiesPosition(
+            alpaka::mem::buf::alloc<Vector, Size>(devAcc, extentBodies));
+
+    auto accBufBodiesMass(
+            alpaka::mem::buf::alloc<float, Size>(devAcc, extentBodies));
+
+    auto accBufForceMatrix(
+            alpaka::mem::buf::alloc<Vector, Size>(devAcc, extentForceMatrix));
 
 
+    /*** Memory Copy ***/
+    alpaka::mem::view::copy(
+            stream,
+            accBufBodiesPosition,
+            hostBufBodiesPosition,
+            extentBodies);
 
+    alpaka::mem::view::copy(
+            stream,
+            accBufBodiesMass,
+            hostBufBodiesMass,
+            extentBodies);
+
+    /*** Execution ***/
+    //auto const kernelExec(
+    //        alpaka::exec::create<Acc>(
+    //            workDiv,
+    //            kernel,
+    //            alpaka::mem::view::getPtrNative( accBufBodiesPosition ),
+    //            alpaka::mem::view::getPtrNative( accBufBodiesMass ),
+    //            alpaka::mem::view::getPtrNative( accBufForceMatrix ),
+    //            numBodies,
+    //            gravitationalConstant,
+    //            smoothnessFactor
+    //        )
+    //    );
+    auto const kernelExec(
+            alpaka::exec::create<Acc>(
+                workDiv,
+                kernel,
+                alpaka::mem::view::getPtrNative( accBufBodiesPosition )));
+
+    // Wait for data
+    alpaka::wait::wait( stream );
+
+    alpaka::stream::enqueue( stream, kernelExec );
+
+    // Wait for execution
+    alpaka::wait::wait( stream );
+
+    /*** Memory Copy back ***/
+    alpaka::mem::view::copy(
+            stream,
+            hostBufForceMatrix,
+            accBufForceMatrix,
+            extentForceMatrix);
+
+    // Wait for copy operation
+    alpaka::wait::wait( stream );
+
+    return forceMatrix;
 }
 
 BOOST_AUTO_TEST_CASE( forceMatrix )
 {
+    Vector bodiesPosition[2];
+    bodiesPosition[0] = Vector{1.0f,0.0f};
+    bodiesPosition[1] = Vector{-1.0f,0.0f};
 
-   
+    float bodiesMass[2] = {
+        2.0f,
+        2.0f
+    };
+
+
+    Vector distance( bodiesPosition[1] - bodiesPosition[0] );
+
+    float forceFactor( 1.0f * bodiesMass[1] * bodiesMass[0] /
+            ( pow( distance.absSq(), 2.0f ) ) );
+
+    Vector force( forceFactor * distance );
+    
+    Vector zero(0.0f);
+
+    Vector forceMatrixResult[2*2] = {
+         zero,  force,
+        -force, zero
+    };
+
+    Vector* forceMatrix = createForceMatrix(
+            bodiesPosition,
+            bodiesMass,
+            2,
+            1.0f,
+            0.0f);
+
+    
+    for( std::size_t i(0); i < 2*2; i++ )
+    {
+        BOOST_CHECK( forceMatrix[i] == forceMatrixResult[i] );
+    }
 }
