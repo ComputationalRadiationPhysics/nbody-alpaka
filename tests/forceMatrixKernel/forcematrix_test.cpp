@@ -17,6 +17,11 @@ bool operator==(Vector const a, Vector const b) {
     return true;
 }
 
+std::ostream& operator<<(std::ostream & s, Vector vec) {
+    s << "(" << vec[0] << "," << vec[1] << ")";
+    return s;
+}
+
 // Run kernel easily in tests
 auto
 createForceMatrix(
@@ -27,8 +32,7 @@ createForceMatrix(
         float const smoothnessFactor)
 -> Vector*
 {
-    //using Kernel = nbody::simulation::kernels::ForceMatrixKernel;
-    using Kernel = nbody::simulation::kernels::TestKernel;
+    using Kernel = nbody::simulation::kernels::ForceMatrixKernel;
     using Acc = alpaka::acc::AccCpuSerial<alpaka::dim::DimInt<2u>, std::size_t>;
     using Size = std::size_t;
     using Stream = alpaka::stream::StreamCpuSync;
@@ -73,7 +77,7 @@ createForceMatrix(
     std::cout << workDiv << std::endl;
 
     /*** Memory Host ***/
-    
+
     alpaka::mem::view::ViewPlainPtr<
         std::decay<decltype(devHost)>::type,
         Vector,
@@ -131,23 +135,18 @@ createForceMatrix(
             extentBodies);
 
     /*** Execution ***/
-    //auto const kernelExec(
-    //        alpaka::exec::create<Acc>(
-    //            workDiv,
-    //            kernel,
-    //            alpaka::mem::view::getPtrNative( accBufBodiesPosition ),
-    //            alpaka::mem::view::getPtrNative( accBufBodiesMass ),
-    //            alpaka::mem::view::getPtrNative( accBufForceMatrix ),
-    //            numBodies,
-    //            gravitationalConstant,
-    //            smoothnessFactor
-    //        )
-    //    );
     auto const kernelExec(
             alpaka::exec::create<Acc>(
                 workDiv,
                 kernel,
-                alpaka::mem::view::getPtrNative( accBufBodiesPosition )));
+                alpaka::mem::view::getPtrNative( accBufBodiesPosition ),
+                alpaka::mem::view::getPtrNative( accBufBodiesMass ),
+                alpaka::mem::view::getPtrNative( accBufForceMatrix ),
+                numBodies,
+                gravitationalConstant,
+                smoothnessFactor
+            )
+        );
 
     // Wait for data
     alpaka::wait::wait( stream );
@@ -185,15 +184,15 @@ BOOST_AUTO_TEST_CASE( forceMatrix )
     Vector distance( bodiesPosition[1] - bodiesPosition[0] );
 
     float forceFactor( 1.0f * bodiesMass[1] * bodiesMass[0] /
-            ( pow( distance.absSq(), 2.0f ) ) );
+            ( pow( distance.absSq(), 1.5f ) ) );
 
     Vector force( forceFactor * distance );
-    
+
     Vector zero(0.0f);
 
     Vector forceMatrixResult[2*2] = {
          zero,  force,
-        -force, zero
+         -force, zero
     };
 
     Vector* forceMatrix = createForceMatrix(
@@ -203,9 +202,12 @@ BOOST_AUTO_TEST_CASE( forceMatrix )
             1.0f,
             0.0f);
 
-    
+
     for( std::size_t i(0); i < 2*2; i++ )
     {
+        std::cout << "Index: " << i << std::endl;
+        std::cout << "Correct result: " << forceMatrix[i] << std::endl;
+        std::cout << "Current result: " << forceMatrixResult[i] << std::endl;
         BOOST_CHECK( forceMatrix[i] == forceMatrixResult[i] );
     }
 }

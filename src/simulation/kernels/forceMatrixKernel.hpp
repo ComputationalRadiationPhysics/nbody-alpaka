@@ -32,6 +32,7 @@ namespace kernels {
  */
 class ForceMatrixKernel
 {
+public:
     /** Force Matrix Kernel
      *
      * This kernel
@@ -59,19 +60,15 @@ class ForceMatrixKernel
     template<
         typename TAcc,
         std::size_t NDim,
-        typename TElem,
-        typename TVector = nbody::simulation::types::Vector<NDim, TElem>
-    >
-    ALPAKA_FN_ACC
-    auto operator()(
-        TAcc const acc,
-        TVector const * const bodiesPosition,
+        typename TElem >
+    ALPAKA_FN_ACC auto operator()(
+        TAcc const & acc,
+        types::Vector<NDim,TElem> const * const bodiesPosition,
         TElem const * const bodiesMass,
-        TVector * const forceMatrix,
-        std::size_t numBodies,
-        TElem const gravitationalConstant,
-        TElem const smoothnessFactor
-    ) const
+        types::Vector<NDim,TElem> * const forceMatrix,
+        std::size_t const & numBodies,
+        TElem const & gravitationalConstant,
+        TElem const & smoothnessFactor ) const
     -> void
     {
         static_assert(
@@ -88,11 +85,11 @@ class ForceMatrixKernel
         else if( indexBodyForce == indexBodyInfluence )
         {
             forceMatrix[ indexBodyForce * numBodies + indexBodyInfluence ] = 
-                TVector(0.0f);
+                types::Vector<NDim,TElem>(0.0f);
         }
         else
         {
-            TVector const positionRelative(
+            types::Vector<NDim,TElem> const positionRelative(
                     bodiesPosition[indexBodyInfluence] -
                     bodiesPosition[indexBodyForce]);
             
@@ -114,17 +111,6 @@ class ForceMatrixKernel
             forceMatrix[ indexBodyForce * numBodies + indexBodyInfluence ] = 
                 forceFactor * positionRelative;
         }
-    }
-};
-
-// TODO: Remove
-class TestKernel
-{
-    template<
-        typename TAcc
-    >
-    void operator()(TAcc const acc, types::Vector<2,float>* const bodiesPositions) {
-        // Do nothing
     }
 };
 
