@@ -16,7 +16,6 @@
 // alpaka, ALPAKA_FN_ACC, ALPAKA_NO_HOST_ACC_WARNING
 #include <alpaka/alpaka.hpp>
 #include <simulation/types/vector.hpp> // Vector
-#include "forceMatrixKernel.hpp" // Class definition
 
 namespace nbody {
 
@@ -75,24 +74,33 @@ public:
                 alpaka::dim::Dim<TAcc>::value == 2,
                 "This kernel required 2-dimensional indices");
 
+        // The influencing body
         auto const indexBodyInfluence(
-                alpaka::idx::getIdx<alpaka::Grid,alpaka::Threads>(acc)[0u]);
+                alpaka::idx::getIdx<alpaka::Grid,alpaka::Threads>( acc )[ 0u ]);
+        // The influenced body
         auto const indexBodyForce(
                 alpaka::idx::getIdx<alpaka::Grid,alpaka::Threads>(acc)[1u]);
 
+        // Both exits?
         if( indexBodyInfluence >= numBodies || indexBodyForce >= numBodies )
             return;
+        // A body does not influence itself
         else if( indexBodyForce == indexBodyInfluence )
         {
             forceMatrix[ indexBodyForce * numBodies + indexBodyInfluence ] = 
                 types::Vector<NDim,TElem>(0.0f);
         }
+        // One body influences a different body
         else
         {
+            // position of influencing relative to influenced body 
+            // ( direction of force )
             types::Vector<NDim,TElem> const positionRelative(
-                    bodiesPosition[indexBodyInfluence] -
-                    bodiesPosition[indexBodyForce]);
+                    bodiesPosition[ indexBodyInfluence ] -
+                    bodiesPosition[ indexBodyForce ] );
             
+            // force scalar and normalizing factor
+            // force scalar * 1/(distance)
             TElem const forceFactor(
                     gravitationalConstant *
                     bodiesMass[indexBodyForce] *
@@ -108,6 +116,7 @@ public:
                             1.5f)
                     ));
             
+            // Save value
             forceMatrix[ indexBodyForce * numBodies + indexBodyInfluence ] = 
                 forceFactor * positionRelative;
         }
