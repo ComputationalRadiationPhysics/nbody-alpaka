@@ -33,7 +33,8 @@ createForceMatrix(
 -> Vector*
 {
     using Kernel = nbody::simulation::kernels::ForceMatrixKernel;
-    using Acc = alpaka::acc::AccCpuSerial<alpaka::dim::DimInt<2u>, std::size_t>;
+    // using Acc = alpaka::acc::AccCpuSerial<alpaka::dim::DimInt<2u>, std::size_t>;
+    using Acc = alpaka::acc::AccCpuOmp2Threads<alpaka::dim::DimInt<2u>, std::size_t>;
     using Size = std::size_t;
     using Stream = alpaka::stream::StreamCpuSync;
 
