@@ -283,7 +283,7 @@ public:
     TElem&
     operator[]( std::size_t const index )
     {
-        assert( index >= 0 && index <= NDim );
+        assert( index <= NDim );
         return this->coord[ index ];
     }
 
@@ -297,7 +297,7 @@ public:
     const TElem
     operator[]( std::size_t const index ) const
     {
-        assert( index >= 0 && index <= NDim );
+        assert( index <= NDim );
         return this->coord[ index ];
     }
 };
