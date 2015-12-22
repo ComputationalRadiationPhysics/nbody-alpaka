@@ -144,7 +144,8 @@ createForceMatrix(
                 alpaka::mem::view::getPtrNative( accBufBodiesMass ),
                 alpaka::mem::view::getPtrNative( accBufForceMatrix ),
                 static_cast<std::size_t>(
-                    alpaka::mem::view::getPitchBytes<1u>(accBufForceMatrix)
+                    alpaka::mem::view::getPitchBytes<1u>(accBufForceMatrix) /
+                    sizeof(Vector)
                 ),
                 numBodies,
                 gravitationalConstant,
