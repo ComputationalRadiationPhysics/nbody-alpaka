@@ -34,7 +34,7 @@ createForceMatrix(
 {
     using Kernel = nbody::simulation::kernels::ForceMatrixKernel;
     // using Acc = alpaka::acc::AccCpuSerial<alpaka::dim::DimInt<2u>, std::size_t>;
-    using Acc = alpaka::acc::AccCpuCudaRt<alpaka::dim::DimInt<2u>, std::size_t>;
+    using Acc = alpaka::acc::AccGpuCudaRt<alpaka::dim::DimInt<2u>, std::size_t>;
     using Size = std::size_t;
     // using Stream = alpaka::stream::StreamCpuSync;
     using Stream = alpaka::stream::StreamCudaRtSync;
