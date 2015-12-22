@@ -10,3 +10,4 @@
  */
 
 #include "forceMatrixKernel.hpp"
+#include "updatePositionsKernel.hpp"
