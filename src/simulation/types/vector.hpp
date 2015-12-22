@@ -49,6 +49,7 @@ public:
      * that doesn't have to be initialized
      *
      */
+    ALPAKA_FN_ACC
     Vector() {}
 
     /** Constructor for one value
@@ -58,6 +59,7 @@ public:
      *
      * @param initialElement Value for initialization
      */
+    ALPAKA_FN_ACC
     Vector(const TElem initialElement)
     {
         for( std::size_t i = 0; i < NDim; i++ )
@@ -75,6 +77,7 @@ public:
      * @param parameter
      * @return return value
      */
+    ALPAKA_FN_ACC
     Vector( const TElem initialData[ NDim ] )
     {
         for( std::size_t i = 0; i < NDim; i++ )
@@ -97,6 +100,7 @@ public:
      * @param parameter
      * @return return value
      */
+    ALPAKA_FN_ACC
     Vector( std::initializer_list<TElem> initialData )
     {
         assert( initialData.size() == NDim );
