@@ -1,2 +1,0 @@
-/home/vincent/Dokumente/alpaka/nbody-alpaka/tests/updatePositionsKernel/CMakeFiles/updatePositions_test.out.dir
-/home/vincent/Dokumente/alpaka/nbody-alpaka/tests/updatePositionsKernel/CMakeFiles/alpaka.dir

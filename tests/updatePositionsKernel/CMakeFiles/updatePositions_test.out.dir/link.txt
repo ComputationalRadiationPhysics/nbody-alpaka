@@ -1,1 +1,0 @@
-/usr/bin/c++    -fopenmp   CMakeFiles/updatePositions_test.out.dir/updatePositions_test.cpp.o  -o updatePositions_test.out -rdynamic /usr/lib/x86_64-linux-gnu/libboost_unit_test_framework.so 
