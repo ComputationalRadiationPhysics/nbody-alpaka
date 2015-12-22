@@ -8,6 +8,7 @@
  */
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE VectorTest
+#include <iostream> // std::cout
 #include <simulation/types/vector.hpp> // Vector
 #include <boost/test/unit_test.hpp>
 
@@ -83,6 +84,13 @@ BOOST_AUTO_TEST_CASE( assignmentWithParenthesis )
     Vector<2,float> b(a);
 
     BOOST_CHECK( b == a );
+}
+
+BOOST_AUTO_TEST_CASE( size )
+{
+    BOOST_CHECK( sizeof(Vector<2,float>) >= 2*sizeof(float) );
+    std::cout << "Vector class size: " <<
+        sizeof(Vector<2,float>) << " bytes" << std::endl;
 }
 
 BOOST_AUTO_TEST_SUITE_END()
