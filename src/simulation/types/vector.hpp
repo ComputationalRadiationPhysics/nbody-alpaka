@@ -15,6 +15,7 @@
 #include <cmath> // sqrt
 #include <initializer_list> // std::initializer_list
 #include <algorithm> // std::copy
+#include <alpaka/alpaka.hpp> // ALPAKA_FN_ACC
 
 namespace nbody {
 
@@ -109,6 +110,7 @@ public:
      *
      * @return absolute of Vector squared
      */
+    ALPAKA_FN_ACC
     auto
     absSq() const
     -> decltype( sqrt( coord[0] ) )
@@ -124,6 +126,7 @@ public:
     template<
         typename TElemOther
     >
+    ALPAKA_FN_ACC
     auto
     operator=( Vector<NDim,TElemOther> const & other )
     -> Vector< NDim, TElem >&
@@ -145,6 +148,7 @@ public:
     template<
         typename TFactor
     >
+    ALPAKA_FN_ACC
     auto
     operator/( TFactor const other ) const
     -> Vector<NDim, decltype( coord[0]/other ) >
@@ -168,6 +172,7 @@ public:
     template<
         typename TElemOther
     >
+    ALPAKA_FN_ACC
     auto
     operator+ ( Vector<NDim, TElemOther> const other ) const
     -> Vector<NDim, decltype( coord[0] + other[0] ) >
@@ -190,6 +195,7 @@ public:
     template<
         typename TElemOther
     >
+    ALPAKA_FN_ACC
     auto
     operator+= ( Vector< NDim, TElemOther > const other )
     -> Vector<NDim, TElem>&
@@ -211,6 +217,7 @@ public:
     template<
         typename TElemOther
     >
+    ALPAKA_FN_ACC
     auto
     operator- ( Vector<NDim,TElemOther> const other ) const
     -> Vector<
@@ -233,6 +240,7 @@ public:
      *
      * @return A new vector containing the result
      */
+    ALPAKA_FN_ACC
     auto
     operator- ( ) const
     -> Vector<
@@ -258,6 +266,7 @@ public:
     template<
         typename TFactor
     >
+    ALPAKA_FN_ACC
     auto
     operator*( TFactor const factor ) const
     -> Vector<
@@ -280,6 +289,7 @@ public:
      * @param index The index of the coordinate to be read or written
      * @return A reference to the coordinate specified by index
      */
+    ALPAKA_FN_ACC
     TElem&
     operator[]( std::size_t const index )
     {
@@ -294,6 +304,7 @@ public:
      * @param index The index of the coordinate to be read
      * @return The value of the coordinate specified by index
      */
+    ALPAKA_FN_ACC
     const TElem
     operator[]( std::size_t const index ) const
     {
