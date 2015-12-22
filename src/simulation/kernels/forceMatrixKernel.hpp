@@ -59,13 +59,15 @@ public:
     template<
         typename TAcc,
         std::size_t NDim,
-        typename TElem >
+        typename TElem,
+        typename TSize >
     ALPAKA_FN_ACC auto operator()(
         TAcc const & acc,
         types::Vector<NDim,TElem> const * const bodiesPosition,
         TElem const * const bodiesMass,
         types::Vector<NDim,TElem> * const forceMatrix,
-        std::size_t const & numBodies,
+        TSize const & pitchSizeForceMatrix,
+        TSize const & numBodies,
         TElem const & gravitationalConstant,
         TElem const & smoothnessFactor ) const
     -> void
@@ -87,7 +89,8 @@ public:
         // A body does not influence itself
         else if( indexBodyForce == indexBodyInfluence )
         {
-            forceMatrix[ indexBodyForce * numBodies + indexBodyInfluence ] = 
+            forceMatrix[ indexBodyForce * pitchSizeForceMatrix +
+                indexBodyInfluence ] = 
                 types::Vector<NDim,TElem>(0.0f);
         }
         // One body influences a different body
@@ -117,7 +120,8 @@ public:
                     ));
             
             // Save value
-            forceMatrix[ indexBodyForce * numBodies + indexBodyInfluence ] = 
+            forceMatrix[ indexBodyForce * pitchSizeForceMatrix +
+                indexBodyInfluence ] = 
                 forceFactor * positionRelative;
         }
     }
