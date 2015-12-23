@@ -87,7 +87,7 @@ public:
         auto const matrixIdx(
                 indexBodyForce * pitchSizeForceMatrix + indexBodyInfluence );
         
-        printf("[z: %d, y: %d] calculated matrixIdx: %d\n",
+        printf("[z: %lu, y: %lu] calculated matrixIdx: %lu\n",
                 indexBodyInfluence,
                 indexBodyForce,
                 matrixIdx);
