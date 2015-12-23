@@ -297,7 +297,7 @@ public:
     TElem&
     operator[]( std::size_t const index )
     {
-        assert( index <= NDim );
+        assert( index < NDim );
         return this->coord[ index ];
     }
 
@@ -312,7 +312,7 @@ public:
     const TElem
     operator[]( std::size_t const index ) const
     {
-        assert( index <= NDim );
+        assert( index < NDim );
         return this->coord[ index ];
     }
 };
@@ -332,11 +332,8 @@ template<
     typename TElem,
     typename TFactor
 >
-Vector<
-    NDim,
-    TElem
->
-operator*( TFactor const factor, Vector<NDim, TElem> const vector )
+auto operator*( TFactor const factor, Vector<NDim, TElem> const vector )
+-> decltype(vector.operator*( factor ) )
 {
     return vector.operator*( factor );
 }
