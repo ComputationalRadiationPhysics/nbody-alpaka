@@ -16,6 +16,7 @@
 // alpaka, ALPAKA_FN_ACC, ALPAKA_NO_HOST_ACC_WARNING
 #include <alpaka/alpaka.hpp>
 #include <simulation/types/vector.hpp> // Vector
+#include <stdio.h> // printf
 
 namespace nbody {
 
@@ -83,14 +84,21 @@ public:
         auto const indexBodyForce(
                 alpaka::idx::getIdx<alpaka::Grid,alpaka::Threads>(acc)[1u]);
 
+        auto const matrixIdx(
+                indexBodyForce * pitchSizeForceMatrix + indexBodyInfluence );
+        
+        printf("[z: %d, y: %d] calculated matrixIdx: %d\n",
+                indexBodyInfluence,
+                indexBodyForce,
+                matrixIdx);
+
         // Both exits?
         if( indexBodyInfluence >= numBodies || indexBodyForce >= numBodies )
             return;
         // A body does not influence itself
         else if( indexBodyForce == indexBodyInfluence )
         {
-            forceMatrix[ indexBodyForce * pitchSizeForceMatrix +
-                indexBodyInfluence ] = 
+            forceMatrix[ matrixIdx ] = 
                 types::Vector<NDim,TElem>(0.0f);
         }
         // One body influences a different body
@@ -120,9 +128,7 @@ public:
                     ));
             
             // Save value
-            forceMatrix[ indexBodyForce * pitchSizeForceMatrix +
-                indexBodyInfluence ] = 
-                forceFactor * positionRelative;
+            forceMatrix[ matrixIdx ] = forceFactor * positionRelative;
         }
     }
 };
