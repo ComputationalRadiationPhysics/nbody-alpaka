@@ -14,7 +14,7 @@
 #include <cassert> // assert
 #include <cmath> // sqrt
 #include <initializer_list> // std::initializer_list
-#include <algorithm> // std::copy
+// #include <algorithm> // std::copy
 #include <alpaka/alpaka.hpp> // ALPAKA_FN_ACC
 
 namespace nbody {
@@ -104,7 +104,14 @@ public:
     Vector( std::initializer_list<TElem> initialData )
     {
         assert( initialData.size() == NDim );
-        std::copy( initialData.begin(), initialData.end(), this->coord );
+        // std::copy( initialData.begin(), initialData.end(), this->coord );
+        std::size_t index = 0;
+        auto iter = initialData.begin();
+        for(;iter < initialData.end();
+                iter++, index++)
+        {
+            this->coord[ index ] = *iter;
+        }
     }
 
     /** absolute of Vector squared
