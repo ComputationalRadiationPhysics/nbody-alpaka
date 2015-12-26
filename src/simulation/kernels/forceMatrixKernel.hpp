@@ -111,6 +111,8 @@ public:
             types::Vector<NDim,TElem> const positionRelative(
                     bodiesPosition[ indexBodyInfluence ] -
                     bodiesPosition[ indexBodyForce ] );
+
+            printf("positionRelative: ( %.3f , %.3f )", positionRelative[0],positionRelative[1]);
             
             // force scalar and normalizing factor
             // force scalar * 1/(distance)
@@ -128,9 +130,15 @@ public:
                                 2.0f),
                             1.5f)
                     ));
+
+            printf("forceFactor: %.3f ",forceFactor);
+
+            auto const result = forceFactor * positionRelative;
+
+            printf("result: ( %.3f , %.3f )", result[0],result[1]);
             
             // Save value
-            forceMatrix[ matrixIdx ] = forceFactor * positionRelative;
+            forceMatrix[ matrixIdx ] = result;
         }
     }
 };
