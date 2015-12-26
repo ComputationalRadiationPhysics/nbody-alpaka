@@ -339,6 +339,7 @@ template<
     typename TElem,
     typename TFactor
 >
+ALPAKA_FN_ACC
 auto operator*( TFactor const factor, Vector<NDim, TElem> const vector )
 -> decltype(vector.operator*( factor ) )
 {
