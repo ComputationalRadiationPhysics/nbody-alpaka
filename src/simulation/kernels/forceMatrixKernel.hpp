@@ -79,10 +79,12 @@ public:
 
         // The influencing body
         auto const indexBodyInfluence(
-                alpaka::idx::getIdx<alpaka::Grid,alpaka::Threads>( acc )[ 0u ]);
+                alpaka::idx::getIdx< alpaka::Grid,alpaka::Threads >
+                    ( acc )[ 0u ]);
         // The influenced body
         auto const indexBodyForce(
-                alpaka::idx::getIdx<alpaka::Grid,alpaka::Threads>(acc)[1u]);
+                alpaka::idx::getIdx< alpaka::Grid,alpaka::Threads >
+                    ( acc )[ 1u ]);
 
         auto const matrixIdx(
                 indexBodyForce * pitchSizeForceMatrix + indexBodyInfluence );
