@@ -9,7 +9,7 @@ FIND_PACKAGE("alpaka" REQUIRED)
 INCLUDE("${ALPAKA_ROOT}/cmake/common.cmake")
 INCLUDE("${ALPAKA_ROOT}/cmake/dev.cmake")
 
-FIND_PACKAGE(Boost "1.58" QUIET COMPONENTS unit_test_framework)
+FIND_PACKAGE(Boost "1.56" QUIET COMPONENTS unit_test_framework)
 IF(NOT Boost_UNIT_TEST_FRAMEWORK_FOUND)
     MESSAGE(FATAL_ERROR "Required test dependency Boost.Test could not be found")
 ELSE()
@@ -29,6 +29,7 @@ INCLUDE_DIRECTORIES(
 MESSAGE(STATUS "Alpaka include dir: ${alpaka_INCLUDE_DIRS}")
 
 ALPAKA_ADD_EXECUTABLE("${PROJECT_NAME}.out" "${PROJECT_NAME}.cpp")
+SET_TARGET_PROPERTIES("${PROJECT_NAME}.out" PROPERTIES COMPILE_FLAGS "-g -G")
 TARGET_LINK_LIBRARIES(
     "${PROJECT_NAME}.out"
     ${_LINK_LIBRARIES_PRIVATE}

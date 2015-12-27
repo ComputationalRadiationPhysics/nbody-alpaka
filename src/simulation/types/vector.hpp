@@ -14,7 +14,8 @@
 #include <cassert> // assert
 #include <cmath> // sqrt
 #include <initializer_list> // std::initializer_list
-#include <algorithm> // std::copy
+// #include <algorithm> // std::copy
+#include <alpaka/alpaka.hpp> // ALPAKA_FN_ACC
 
 namespace nbody {
 
@@ -48,6 +49,7 @@ public:
      * that doesn't have to be initialized
      *
      */
+    ALPAKA_FN_ACC
     Vector() {}
 
     /** Constructor for one value
@@ -57,6 +59,7 @@ public:
      *
      * @param initialElement Value for initialization
      */
+    ALPAKA_FN_ACC
     Vector(const TElem initialElement)
     {
         for( std::size_t i = 0; i < NDim; i++ )
@@ -74,6 +77,7 @@ public:
      * @param parameter
      * @return return value
      */
+    ALPAKA_FN_ACC
     Vector( const TElem initialData[ NDim ] )
     {
         for( std::size_t i = 0; i < NDim; i++ )
@@ -96,10 +100,18 @@ public:
      * @param parameter
      * @return return value
      */
+    ALPAKA_FN_ACC
     Vector( std::initializer_list<TElem> initialData )
     {
         assert( initialData.size() == NDim );
-        std::copy( initialData.begin(), initialData.end(), this->coord );
+        // std::copy( initialData.begin(), initialData.end(), this->coord );
+        std::size_t index = 0;
+        auto iter = initialData.begin();
+        for(;iter < initialData.end();
+                iter++, index++)
+        {
+            this->coord[ index ] = *iter;
+        }
     }
 
     /** absolute of Vector squared
@@ -109,6 +121,7 @@ public:
      *
      * @return absolute of Vector squared
      */
+    ALPAKA_FN_ACC
     auto
     absSq() const
     -> decltype( sqrt( coord[0] ) )
@@ -124,6 +137,7 @@ public:
     template<
         typename TElemOther
     >
+    ALPAKA_FN_ACC
     auto
     operator=( Vector<NDim,TElemOther> const & other )
     -> Vector< NDim, TElem >&
@@ -145,6 +159,7 @@ public:
     template<
         typename TFactor
     >
+    ALPAKA_FN_ACC
     auto
     operator/( TFactor const other ) const
     -> Vector<NDim, decltype( coord[0]/other ) >
@@ -168,6 +183,7 @@ public:
     template<
         typename TElemOther
     >
+    ALPAKA_FN_ACC
     auto
     operator+ ( Vector<NDim, TElemOther> const other ) const
     -> Vector<NDim, decltype( coord[0] + other[0] ) >
@@ -190,6 +206,7 @@ public:
     template<
         typename TElemOther
     >
+    ALPAKA_FN_ACC
     auto
     operator+= ( Vector< NDim, TElemOther > const other )
     -> Vector<NDim, TElem>&
@@ -211,6 +228,7 @@ public:
     template<
         typename TElemOther
     >
+    ALPAKA_FN_ACC
     auto
     operator- ( Vector<NDim,TElemOther> const other ) const
     -> Vector<
@@ -233,6 +251,7 @@ public:
      *
      * @return A new vector containing the result
      */
+    ALPAKA_FN_ACC
     auto
     operator- ( ) const
     -> Vector<
@@ -258,6 +277,7 @@ public:
     template<
         typename TFactor
     >
+    ALPAKA_FN_ACC
     auto
     operator*( TFactor const factor ) const
     -> Vector<
@@ -280,10 +300,11 @@ public:
      * @param index The index of the coordinate to be read or written
      * @return A reference to the coordinate specified by index
      */
+    ALPAKA_FN_ACC
     TElem&
     operator[]( std::size_t const index )
     {
-        assert( index >= 0 && index <= NDim );
+        assert( index < NDim );
         return this->coord[ index ];
     }
 
@@ -294,10 +315,11 @@ public:
      * @param index The index of the coordinate to be read
      * @return The value of the coordinate specified by index
      */
+    ALPAKA_FN_ACC
     const TElem
     operator[]( std::size_t const index ) const
     {
-        assert( index >= 0 && index <= NDim );
+        assert( index < NDim );
         return this->coord[ index ];
     }
 };
@@ -317,11 +339,9 @@ template<
     typename TElem,
     typename TFactor
 >
-Vector<
-    NDim,
-    TElem
->
-operator*( TFactor const factor, Vector<NDim, TElem> const vector )
+ALPAKA_FN_ACC
+auto operator*( TFactor const factor, Vector<NDim, TElem> const vector )
+-> decltype(vector.operator*( factor ) )
 {
     return vector.operator*( factor );
 }

@@ -23,6 +23,10 @@ std::ostream& operator<<(std::ostream & s, Vector vec) {
 }
 
 // Run kernel easily in tests
+template<
+    typename TAcc,
+    typename TStream
+>
 auto
 createForceMatrix(
         Vector * bodiesPosition,
@@ -33,9 +37,11 @@ createForceMatrix(
 -> Vector*
 {
     using Kernel = nbody::simulation::kernels::ForceMatrixKernel;
-    using Acc = alpaka::acc::AccCpuSerial<alpaka::dim::DimInt<2u>, std::size_t>;
+    // using Acc = alpaka::acc::AccCpuSerial<alpaka::dim::DimInt<2u>, std::size_t>;
+    // using Acc = alpaka::acc::AccGpuCudaRt<alpaka::dim::DimInt<2u>, std::size_t>;
     using Size = std::size_t;
-    using Stream = alpaka::stream::StreamCpuSync;
+    // using Stream = alpaka::stream::StreamCpuSync;
+    // using Stream = alpaka::stream::StreamCudaRtSync;
 
     /*** Kernel ***/
     Kernel kernel;
@@ -43,9 +49,9 @@ createForceMatrix(
     /*** Devices ***/
     auto devHost( alpaka::dev::DevManCpu::getDevByIdx( 0 ) );
 
-    alpaka::dev::Dev<Acc> devAcc( alpaka::dev::DevMan<Acc>::getDevByIdx( 0 ) );
+    alpaka::dev::Dev<TAcc> devAcc( alpaka::dev::DevMan<TAcc>::getDevByIdx( 0 ) );
 
-    Stream stream(devAcc);
+    TStream stream(devAcc);
 
     /*** Work extent ***/
     alpaka::Vec<
@@ -62,7 +68,7 @@ createForceMatrix(
         alpaka::dim::DimInt<2u>,
         Size
     > const workDiv(
-        alpaka::workdiv::getValidWorkDiv< Acc >(
+        alpaka::workdiv::getValidWorkDiv< TAcc >(
             devAcc,
             extentForceMatrix,
             alpaka::Vec<
@@ -136,12 +142,16 @@ createForceMatrix(
 
     /*** Execution ***/
     auto const kernelExec(
-            alpaka::exec::create<Acc>(
+            alpaka::exec::create<TAcc>(
                 workDiv,
                 kernel,
                 alpaka::mem::view::getPtrNative( accBufBodiesPosition ),
                 alpaka::mem::view::getPtrNative( accBufBodiesMass ),
                 alpaka::mem::view::getPtrNative( accBufForceMatrix ),
+                static_cast<std::size_t>(
+                    alpaka::mem::view::getPitchBytes<1u>(accBufForceMatrix) /
+                    sizeof(Vector)
+                ),
                 numBodies,
                 gravitationalConstant,
                 smoothnessFactor
@@ -195,7 +205,18 @@ BOOST_AUTO_TEST_CASE( forceMatrix )
          -force, zero
     };
 
-    Vector* forceMatrix = createForceMatrix(
+    // using Acc = alpaka::acc::AccCpuSerial<alpaka::dim::DimInt<2u>, std::size_t>;
+    // using Acc = alpaka::acc::AccGpuCudaRt<alpaka::dim::DimInt<2u>, std::size_t>;
+    // using Stream = alpaka::stream::StreamCpuSync;
+    // using Stream = alpaka::stream::StreamCudaRtSync;
+
+    printf("Test with CPU\n");
+    Vector* forceMatrix = createForceMatrix<
+        alpaka::acc::AccCpuSerial<
+            alpaka::dim::DimInt<2u>,
+            std::size_t >,
+        alpaka::stream::StreamCpuSync
+    >(
             bodiesPosition,
             bodiesMass,
             2,
@@ -205,9 +226,29 @@ BOOST_AUTO_TEST_CASE( forceMatrix )
 
     for( std::size_t i(0); i < 2*2; i++ )
     {
-        std::cout << "Index: " << i << std::endl;
-        std::cout << "Correct result: " << forceMatrix[i] << std::endl;
-        std::cout << "Current result: " << forceMatrixResult[i] << std::endl;
         BOOST_CHECK( forceMatrix[i] == forceMatrixResult[i] );
     }
+
+#ifdef ALPAKA_ACC_GPU_CUDA_ENABLED
+    printf("Test with CUDA\n");
+    Vector* forceMatrix = createForceMatrix<
+        alpaka::acc::AccGpuCudaRt<
+            alpaka::dim::DimInt<2u>,
+            std::size_t>,
+        alpaka::stream::StreamCudaRtSync
+    >(
+            bodiesPosition,
+            bodiesMass,
+            2,
+            1.0f,
+            0.0f);
+
+
+    for( std::size_t i(0); i < 2*2; i++ )
+    {
+        BOOST_CHECK( forceMatrix[i] == forceMatrixResult[i] );
+    }
+#endif
+
 }
+

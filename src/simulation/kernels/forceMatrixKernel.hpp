@@ -16,6 +16,7 @@
 // alpaka, ALPAKA_FN_ACC, ALPAKA_NO_HOST_ACC_WARNING
 #include <alpaka/alpaka.hpp>
 #include <simulation/types/vector.hpp> // Vector
+#include <stdio.h> // printf
 
 namespace nbody {
 
@@ -59,13 +60,15 @@ public:
     template<
         typename TAcc,
         std::size_t NDim,
-        typename TElem >
+        typename TElem,
+        typename TSize >
     ALPAKA_FN_ACC auto operator()(
         TAcc const & acc,
         types::Vector<NDim,TElem> const * const bodiesPosition,
         TElem const * const bodiesMass,
         types::Vector<NDim,TElem> * const forceMatrix,
-        std::size_t const & numBodies,
+        TSize const & pitchSizeForceMatrix,
+        TSize const & numBodies,
         TElem const & gravitationalConstant,
         TElem const & smoothnessFactor ) const
     -> void
@@ -76,18 +79,23 @@ public:
 
         // The influencing body
         auto const indexBodyInfluence(
-                alpaka::idx::getIdx<alpaka::Grid,alpaka::Threads>( acc )[ 0u ]);
+                alpaka::idx::getIdx< alpaka::Grid,alpaka::Threads >
+                    ( acc )[ 0u ]);
         // The influenced body
         auto const indexBodyForce(
-                alpaka::idx::getIdx<alpaka::Grid,alpaka::Threads>(acc)[1u]);
+                alpaka::idx::getIdx< alpaka::Grid,alpaka::Threads >
+                    ( acc )[ 1u ]);
 
+        auto const matrixIdx(
+                indexBodyForce * pitchSizeForceMatrix + indexBodyInfluence );
+        
         // Both exits?
         if( indexBodyInfluence >= numBodies || indexBodyForce >= numBodies )
             return;
         // A body does not influence itself
         else if( indexBodyForce == indexBodyInfluence )
         {
-            forceMatrix[ indexBodyForce * numBodies + indexBodyInfluence ] = 
+            forceMatrix[ matrixIdx ] = 
                 types::Vector<NDim,TElem>(0.0f);
         }
         // One body influences a different body
@@ -98,7 +106,7 @@ public:
             types::Vector<NDim,TElem> const positionRelative(
                     bodiesPosition[ indexBodyInfluence ] -
                     bodiesPosition[ indexBodyForce ] );
-            
+
             // force scalar and normalizing factor
             // force scalar * 1/(distance)
             TElem const forceFactor(
@@ -115,10 +123,11 @@ public:
                                 2.0f),
                             1.5f)
                     ));
+
+            auto const result = forceFactor * positionRelative;
             
             // Save value
-            forceMatrix[ indexBodyForce * numBodies + indexBodyInfluence ] = 
-                forceFactor * positionRelative;
+            forceMatrix[ matrixIdx ] = result;
         }
     }
 };
