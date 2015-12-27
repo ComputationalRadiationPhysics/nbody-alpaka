@@ -89,11 +89,6 @@ public:
         auto const matrixIdx(
                 indexBodyForce * pitchSizeForceMatrix + indexBodyInfluence );
         
-        printf("[z: %lu, y: %lu] calculated matrixIdx: %lu\n",
-                indexBodyInfluence,
-                indexBodyForce,
-                matrixIdx);
-
         // Both exits?
         if( indexBodyInfluence >= numBodies || indexBodyForce >= numBodies )
             return;
@@ -112,8 +107,6 @@ public:
                     bodiesPosition[ indexBodyInfluence ] -
                     bodiesPosition[ indexBodyForce ] );
 
-            printf("positionRelative: ( %.3f , %.3f )", positionRelative[0],positionRelative[1]);
-            
             // force scalar and normalizing factor
             // force scalar * 1/(distance)
             TElem const forceFactor(
@@ -131,11 +124,7 @@ public:
                             1.5f)
                     ));
 
-            printf("forceFactor: %.3f ",forceFactor);
-
             auto const result = forceFactor * positionRelative;
-
-            printf("result: ( %.3f , %.3f )", result[0],result[1]);
             
             // Save value
             forceMatrix[ matrixIdx ] = result;
