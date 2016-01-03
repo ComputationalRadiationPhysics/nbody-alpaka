@@ -6,10 +6,18 @@
 #include <simulation/types/vector.hpp> //Vector
 #include <boost/test/unit_test.hpp>
 
-using Vector = nbody::simulation::types::Vector<2,float>;
+template<
+    std::size_t NDim,
+    typename TElem
+>
+using Vector = nbody::simulation::types::Vector<NDim,TElem>;
 
 // equal operator for Vectors. Just for testing purposes.
-bool operator==(Vector const a, Vector const b) {
+template<
+    std::size_t NDim,
+    typename TElem
+>
+bool operator==(Vector<NDim,TElem> const a, Vector<NDim,TElem> const b) {
     for(std::size_t i = 0; i < 2; i++) {
         if(a[i] != b[i])
             return false;
@@ -17,24 +25,33 @@ bool operator==(Vector const a, Vector const b) {
     return true;
 }
 
-std::ostream& operator<<(std::ostream & s, Vector vec) {
-    s << "(" << vec[0] << "," << vec[1] << ")";
+template<
+    std::size_t NDim,
+    typename TElem
+>
+std::ostream& operator<<(std::ostream & s, Vector<NDim, TElem> vec) {
+    s << "(" << vec[0];
+    for(unsigned int i = 1; i < NDim; i++) {
+        s << ", " << vec[i];
+    }
+    s << ")";
     return s;
 }
 
 // Run kernel easily in tests
 template<
     typename TAcc,
-    typename TStream
+    typename TStream,
+    typename TVector
 >
 auto
 createForceMatrix(
-        Vector * bodiesPosition,
+        TVector * bodiesPosition,
         float * bodiesMass,
         std::size_t numBodies,
         float const gravitationalConstant,
         float const smoothnessFactor)
--> Vector*
+-> TVector*
 {
     using Kernel = nbody::simulation::kernels::ForceMatrixKernel;
     // using Acc = alpaka::acc::AccCpuSerial<alpaka::dim::DimInt<2u>, std::size_t>;
@@ -86,7 +103,7 @@ createForceMatrix(
 
     alpaka::mem::view::ViewPlainPtr<
         std::decay<decltype(devHost)>::type,
-        Vector,
+        TVector,
         alpaka::dim::DimInt<1u>,
         Size>
     hostBufBodiesPosition(
@@ -104,11 +121,11 @@ createForceMatrix(
             devHost,
             extentBodies);
 
-    Vector* forceMatrix = new Vector[ numBodies * numBodies ];
+    TVector* forceMatrix = new TVector[ numBodies * numBodies ];
 
     alpaka::mem::view::ViewPlainPtr<
         std::decay<decltype(devHost)>::type,
-        Vector,
+        TVector,
         alpaka::dim::DimInt<2u>,
         Size>
     hostBufForceMatrix(
@@ -118,13 +135,13 @@ createForceMatrix(
 
     /*** Memory Acc ***/
     auto accBufBodiesPosition(
-            alpaka::mem::buf::alloc<Vector, Size>(devAcc, extentBodies));
+            alpaka::mem::buf::alloc<TVector, Size>(devAcc, extentBodies));
 
     auto accBufBodiesMass(
             alpaka::mem::buf::alloc<float, Size>(devAcc, extentBodies));
 
     auto accBufForceMatrix(
-            alpaka::mem::buf::alloc<Vector, Size>(devAcc, extentForceMatrix));
+            alpaka::mem::buf::alloc<TVector, Size>(devAcc, extentForceMatrix));
 
 
     /*** Memory Copy ***/
@@ -150,7 +167,7 @@ createForceMatrix(
                 alpaka::mem::view::getPtrNative( accBufForceMatrix ),
                 static_cast<std::size_t>(
                     alpaka::mem::view::getPitchBytes<1u>(accBufForceMatrix) /
-                    sizeof(Vector)
+                    sizeof(TVector)
                 ),
                 numBodies,
                 gravitationalConstant,
@@ -179,11 +196,12 @@ createForceMatrix(
     return forceMatrix;
 }
 
-BOOST_AUTO_TEST_CASE( forceMatrix )
+BOOST_AUTO_TEST_CASE( forceMatrix2D )
 {
-    Vector bodiesPosition[2];
-    bodiesPosition[0] = Vector{1.0f,0.0f};
-    bodiesPosition[1] = Vector{-1.0f,0.0f};
+    using Vector2F = Vector<2,float>;
+    Vector2F bodiesPosition[2];
+    bodiesPosition[0] = Vector2F{1.0f,0.0f};
+    bodiesPosition[1] = Vector2F{-1.0f,0.0f};
 
     float bodiesMass[2] = {
         2.0f,
@@ -191,16 +209,16 @@ BOOST_AUTO_TEST_CASE( forceMatrix )
     };
 
 
-    Vector distance( bodiesPosition[1] - bodiesPosition[0] );
+    Vector2F distance( bodiesPosition[1] - bodiesPosition[0] );
 
     float forceFactor( 1.0f * bodiesMass[1] * bodiesMass[0] /
             ( pow( distance.absSq(), 1.5f ) ) );
 
-    Vector force( forceFactor * distance );
+    Vector2F force( forceFactor * distance );
 
-    Vector zero(0.0f);
+    Vector2F zero(0.0f);
 
-    Vector forceMatrixResult[2*2] = {
+    Vector2F forceMatrixResult[2*2] = {
          zero,  force,
          -force, zero
     };
@@ -211,7 +229,7 @@ BOOST_AUTO_TEST_CASE( forceMatrix )
     // using Stream = alpaka::stream::StreamCudaRtSync;
 
     printf("Test with CPU\n");
-    Vector* forceMatrix = createForceMatrix<
+    Vector2F* forceMatrix = createForceMatrix<
         alpaka::acc::AccCpuSerial<
             alpaka::dim::DimInt<2u>,
             std::size_t >,
@@ -231,7 +249,7 @@ BOOST_AUTO_TEST_CASE( forceMatrix )
 
 #ifdef ALPAKA_ACC_GPU_CUDA_ENABLED
     printf("Test with CUDA\n");
-    Vector* forceMatrix = createForceMatrix<
+    Vector2F* forceMatrix = createForceMatrix<
         alpaka::acc::AccGpuCudaRt<
             alpaka::dim::DimInt<2u>,
             std::size_t>,
@@ -252,3 +270,76 @@ BOOST_AUTO_TEST_CASE( forceMatrix )
 
 }
 
+BOOST_AUTO_TEST_CASE( forceMatrix3D )
+{
+    using Vector3F = Vector<3,float>;
+    Vector3F bodiesPosition[2];
+    bodiesPosition[0] = Vector3F{1.0f,0.0f,0.0f};
+    bodiesPosition[1] = Vector3F{-1.0f,0.0f,0.0f};
+
+    float bodiesMass[2] = {
+        2.0f,
+        2.0f
+    };
+
+
+    Vector3F distance( bodiesPosition[1] - bodiesPosition[0] );
+
+    float forceFactor( 1.0f * bodiesMass[1] * bodiesMass[0] /
+            ( pow( distance.absSq(), 1.5f ) ) );
+
+    Vector3F force( forceFactor * distance );
+
+    Vector3F zero(0.0f);
+
+    Vector3F forceMatrixResult[2*2] = {
+         zero,  force,
+         -force, zero
+    };
+
+    // using Acc = alpaka::acc::AccCpuSerial<alpaka::dim::DimInt<2u>, std::size_t>;
+    // using Acc = alpaka::acc::AccGpuCudaRt<alpaka::dim::DimInt<2u>, std::size_t>;
+    // using Stream = alpaka::stream::StreamCpuSync;
+    // using Stream = alpaka::stream::StreamCudaRtSync;
+
+    printf("Test with CPU\n");
+    Vector3F* forceMatrix = createForceMatrix<
+        alpaka::acc::AccCpuSerial<
+            alpaka::dim::DimInt<2u>,
+            std::size_t >,
+        alpaka::stream::StreamCpuSync
+    >(
+            bodiesPosition,
+            bodiesMass,
+            2,
+            1.0f,
+            0.0f);
+
+
+    for( std::size_t i(0); i < 2*2; i++ )
+    {
+        BOOST_CHECK( forceMatrix[i] == forceMatrixResult[i] );
+    }
+
+#ifdef ALPAKA_ACC_GPU_CUDA_ENABLED
+    printf("Test with CUDA\n");
+    Vector3F* forceMatrix = createForceMatrix<
+        alpaka::acc::AccGpuCudaRt<
+            alpaka::dim::DimInt<2u>,
+            std::size_t>,
+        alpaka::stream::StreamCudaRtSync
+    >(
+            bodiesPosition,
+            bodiesMass,
+            2,
+            1.0f,
+            0.0f);
+
+
+    for( std::size_t i(0); i < 2*2; i++ )
+    {
+        BOOST_CHECK( forceMatrix[i] == forceMatrixResult[i] );
+    }
+#endif
+
+}
