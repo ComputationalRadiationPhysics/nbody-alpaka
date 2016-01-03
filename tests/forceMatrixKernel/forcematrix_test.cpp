@@ -249,7 +249,7 @@ BOOST_AUTO_TEST_CASE( forceMatrix2D )
 
 #ifdef ALPAKA_ACC_GPU_CUDA_ENABLED
     printf("Test with CUDA\n");
-    Vector2F* forceMatrix = createForceMatrix<
+    forceMatrix = createForceMatrix<
         alpaka::acc::AccGpuCudaRt<
             alpaka::dim::DimInt<2u>,
             std::size_t>,
@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_CASE( forceMatrix3D )
     // using Stream = alpaka::stream::StreamCudaRtSync;
 
     printf("Test with CPU\n");
-    Vector3F* forceMatrix = createForceMatrix<
+    forceMatrix = createForceMatrix<
         alpaka::acc::AccCpuSerial<
             alpaka::dim::DimInt<2u>,
             std::size_t >,
