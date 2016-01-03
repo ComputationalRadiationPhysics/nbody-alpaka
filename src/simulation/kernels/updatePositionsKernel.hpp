@@ -33,16 +33,19 @@ public:
 	template<
         typename TAcc,
         std::size_t NDim,
-        typename TElem
-        >
-	ALPAKA_FN_ACC auto operator()(
+        typename TElem,
+        typename TSize,
+        typename TTime
+    >
+    ALPAKA_FN_ACC auto operator()(
 		TAcc const & acc,
 		types::Vector<NDim,TElem> const * const forceMatrix,
+        TSize const & pitchSizeForceMatrix,
 		types::Vector<NDim, TElem> * const bodiesPosition,
 		types::Vector<NDim,TElem> * const bodiesVelocity,
 		TElem const * const bodiesMass,
-		TElem const & dt,
-		std::size_t const & numBodies) const
+		TTime const & dt,
+		TSize const & numBodies) const
 	->void
 	{
         static_assert(
@@ -52,11 +55,15 @@ public:
         auto const threadIdx(
             alpaka::idx::getIdx<alpaka::Grid, alpaka::Threads>(acc)[0u]);
 		
+        //Check if out of range
+        if(threadIdx>=numBodies)
+            return;
+
 		//Sum up the forces
         types::Vector<NDim,TElem> force(static_cast<TElem>(0));
 		for(std::size_t i(0); i< numBodies;i++)
         {
-			force+=forceMatrix[threadIdx*numBodies+i];
+			force+=forceMatrix[threadIdx*pitchSizeForceMatrix+i];
 		}
         //calculate new position p=a/2*dt² +v*dt + p_0
         bodiesPosition[threadIdx]+= (force/(2*bodiesMass[threadIdx])*dt+
