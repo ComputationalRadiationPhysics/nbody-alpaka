@@ -166,8 +166,8 @@ createForceMatrix(
                 alpaka::mem::view::getPtrNative( accBufBodiesMass ),
                 alpaka::mem::view::getPtrNative( accBufForceMatrix ),
                 static_cast<std::size_t>(
-                    alpaka::mem::view::getPitchBytes<1u>(accBufForceMatrix) /
-                    sizeof(TVector)
+                    alpaka::mem::view::getPitchBytes<1u>(accBufForceMatrix) // /
+//                    sizeof(TVector)
                 ),
                 numBodies,
                 gravitationalConstant,
@@ -198,6 +198,7 @@ createForceMatrix(
 
 BOOST_AUTO_TEST_CASE( forceMatrix2D )
 {
+    printf("-- Test 2D\n");
     using Vector2F = Vector<2,float>;
     Vector2F bodiesPosition[2];
     bodiesPosition[0] = Vector2F{1.0f,0.0f};
@@ -272,6 +273,7 @@ BOOST_AUTO_TEST_CASE( forceMatrix2D )
 
 BOOST_AUTO_TEST_CASE( forceMatrix3D )
 {
+    printf("Test 3D\n");
     using Vector3F = Vector<3,float>;
     Vector3F bodiesPosition[2];
     bodiesPosition[0] = Vector3F{1.0f,0.0f,0.0f};
