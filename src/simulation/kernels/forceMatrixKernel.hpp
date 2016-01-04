@@ -92,7 +92,7 @@ public:
         // the size of Vector<NDim,TElem>. e.g. Vector<3,float>'s size is 12 bytes
         types::Vector<NDim,TElem> * const matrixRow(
             (types::Vector<NDim,TElem>*)(
-                (void*)forceMatrix +
+                (char*)forceMatrix +
                 indexBodyForce * pitchBytesForceMatrix));
 
         // Both exits?
