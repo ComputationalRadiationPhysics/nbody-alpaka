@@ -23,7 +23,7 @@
 ### 1.5 Aufgaben verteilen
 - auf Klassenebene
 
-## 2.Entwicklung(15.12.2015-6.1.2016)
+## 2.Entwicklung(15.12.2015-14.1.2016)
 
 ### 2.1 Anfang
 - Prototyp
@@ -37,11 +37,11 @@
     - Aktualisieren der Geschwindigkeiten und Positionen
     - Evtl. Visualisierung (wenn zeitlich möglich)
 
-## 3.Testphase(7.1.2016-14.1.2016)
+## 3.Testphase(14.1.2016-17.1.2016)
 - Kleine Testszenarien erstellen
 - Debugging anhand der Testszenarien
 
-## 4.Messungen(15.1-20.1.2016)
+## 4.Messungen(18.1-22.1.2016)
 - Laufzeit
 - Effizienz (Auslastung)
 - Skalierung des Programms anhand der Problemgröße
