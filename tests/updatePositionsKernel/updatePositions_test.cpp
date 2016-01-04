@@ -6,6 +6,7 @@
 #include <simulation/kernels/updatePositionsKernel.hpp> 
 #include <simulation/types/vector.hpp> //Vector
 #include <boost/test/unit_test.hpp>
+const float gravitationalConstant=6.674e-11;
 
 using Vector = nbody::simulation::types::Vector<2,float>;
 
@@ -28,14 +29,13 @@ runUpdatePositionsKernel(
     Vector * forceMatrix,
     Vector * bodiesPosition,
     Vector * bodiesVelocity,
-    float * bodiesMass,
-    float  const dt,
-    std::size_t numBodies
+    std::size_t numBodies,
+    float  const dt
     )
 ->Vector *
 {
     using Kernel = nbody::simulation::kernels::UpdatePositionsKernel;
-    using Acc = alpaka::acc::AccCpuOmp2Blocks<alpaka::dim::DimInt<1u>,std::size_t>;
+    using Acc = alpaka::acc::AccCpuSerial<alpaka::dim::DimInt<1u>,std::size_t>;
     using Size = std::size_t;
     using Stream = alpaka::stream::StreamCpuSync;
 
@@ -112,15 +112,15 @@ runUpdatePositionsKernel(
         extentBodies);
 
     //Masses
-    alpaka::mem::view::ViewPlainPtr<
-        std::decay<decltype(devHost)>::type,
-        float,
-        alpaka::dim::DimInt<1u>,
-        Size>
-    hostBufBodiesMass(
-        bodiesMass,
-        devHost,
-        extentBodies);
+    // alpaka::mem::view::ViewPlainPtr<
+    //     std::decay<decltype(devHost)>::type,
+    //     float,
+    //     alpaka::dim::DimInt<1u>,
+    //     Size>
+    // hostBufBodiesMass(
+    //     bodiesMass,
+    //     devHost,
+    //     extentBodies);
 
     /*** Memory Acc ***/
 
@@ -133,8 +133,8 @@ runUpdatePositionsKernel(
     auto accBufBodiesVelocity(
         alpaka::mem::buf::alloc<Vector, Size>(devAcc, extentBodies));
 
-    auto accBufBodiesMass(
-        alpaka::mem::buf::alloc<float, Size>(devAcc, extentBodies));
+    // auto accBufBodiesMass(
+    //     alpaka::mem::buf::alloc<float, Size>(devAcc, extentBodies));
 
     /*** Memory copy ***/
 
@@ -156,11 +156,11 @@ runUpdatePositionsKernel(
         hostBufBodiesVelocity,
         extentBodies);
 
-    alpaka::mem::view::copy(
-        stream,
-        accBufBodiesMass,
-        hostBufBodiesMass,
-        extentBodies);
+    // alpaka::mem::view::copy(
+    //     stream,
+    //     accBufBodiesMass,
+    //     hostBufBodiesMass,
+    //     extentBodies);
 
     /*** Execution ***/
     auto const kernelExec(
@@ -170,9 +170,12 @@ runUpdatePositionsKernel(
             alpaka::mem::view::getPtrNative(accBufForceMatrix),
             alpaka::mem::view::getPtrNative(accBufBodiesPosition),
             alpaka::mem::view::getPtrNative(accBufBodiesVelocity),
-            alpaka::mem::view::getPtrNative(accBufBodiesMass),
-            dt,
-            numBodies
+            static_cast<std::size_t>(
+                alpaka::mem::view::getPitchBytes<1u>(accBufForceMatrix)
+            ),
+            numBodies,
+            gravitationalConstant,
+            dt
         )
     );
 
@@ -202,11 +205,6 @@ BOOST_AUTO_TEST_CASE(updatePositions)
     bodiesPosition[0] = Vector{1.0f,0.0f};
     bodiesPosition[1] =Vector{-1.0f,0.0f};
 
-    float bodiesMass[2] = {
-        2.0f,
-        1.0f
-    };
-
     Vector forceMatrix[4] = {
         Vector{ 0.0f, 0.0f },
         Vector{ 1.0f,0.0f},
@@ -230,16 +228,16 @@ BOOST_AUTO_TEST_CASE(updatePositions)
         {
             force+=forceMatrix[i*numBodies+j];
         }
-        newPositions_test[i]= dt*(bodiesVelocity[i]+dt*force/(2*bodiesMass[i]))+bodiesPosition[i];
+        force=force*gravitationalConstant;
+        newPositions_test[i]= dt*(bodiesVelocity[i]+dt*force/2+bodiesPosition[i]);
     }
 
     Vector* newPositions_Kernel=runUpdatePositionsKernel(
                 forceMatrix,
                 bodiesPosition, 
                 bodiesVelocity,
-                bodiesMass,
-                dt,
-                numBodies
+                numBodies,
+                dt
             );
 
     for (std::size_t i=0; i<numBodies;i++)

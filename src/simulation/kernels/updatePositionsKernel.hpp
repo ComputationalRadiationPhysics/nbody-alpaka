@@ -40,12 +40,13 @@ public:
     ALPAKA_FN_ACC auto operator()(
 		TAcc const & acc,
 		types::Vector<NDim,TElem> const * const forceMatrix,
-        TSize const & pitchSizeForceMatrix,
 		types::Vector<NDim, TElem> * const bodiesPosition,
 		types::Vector<NDim,TElem> * const bodiesVelocity,
-		TElem const * const bodiesMass,
-		TTime const & dt,
-		TSize const & numBodies) const
+        TSize const & pitchSizeForceMatrix,
+        TSize const & numBodies,
+        float gravitationalConstant,
+		TTime const & dt
+		) const
 	->void
 	{
         static_assert(
@@ -55,21 +56,30 @@ public:
         auto const threadIdx(
             alpaka::idx::getIdx<alpaka::Grid, alpaka::Threads>(acc)[0u]);
 		
-        //Check if out of range
+    //Check if out of range
         if(threadIdx>=numBodies)
             return;
 
-		//Sum up the forces
-        types::Vector<NDim,TElem> force(static_cast<TElem>(0));
+    //Sum up the "forces"(accelerations/gravitationalConstant)
+        //calculate begin of line
+        
+        types::Vector<NDim,TElem> * beginOfLine(
+                (types::Vector<NDim,TElem>*)(
+                    (char*)forceMatrix +
+                    threadIdx * pitchSizeForceMatrix)
+                );
+
+        types::Vector<NDim,TElem> acceleration(static_cast<TElem>(0));
 		for(std::size_t i(0); i< numBodies;i++)
         {
-			force+=forceMatrix[threadIdx*pitchSizeForceMatrix+i];
+			acceleration+=beginOfLine[i];
 		}
+        acceleration=acceleration*gravitationalConstant;
         //calculate new position p=a/2*dt² +v*dt + p_0
-        bodiesPosition[threadIdx]+= (force/(2*bodiesMass[threadIdx])*dt+
+        bodiesPosition[threadIdx]+= (acceleration/(2)*dt+
             bodiesVelocity[threadIdx])*dt;
 		//calculate velocity v=a*dt
-		bodiesVelocity[threadIdx]+=force*dt/bodiesMass[threadIdx];
+		bodiesVelocity[threadIdx]+=acceleration*dt;
 		
 	}
 };
