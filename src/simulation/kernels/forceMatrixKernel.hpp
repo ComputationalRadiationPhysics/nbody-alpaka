@@ -90,11 +90,10 @@ public:
         //         indexBodyForce * pitchSizeForceMatrix + indexBodyInfluence );
         // Warning: The following is necessary as the pitchBytes may not be divisable by
         // the size of Vector<NDim,TElem>. e.g. Vector<3,float>'s size is 12 bytes
-        types::Vector<NDim,TElem> * const matrixPtr(
+        types::Vector<NDim,TElem> * const matrixRow(
             (types::Vector<NDim,TElem>*)(
                 (void*)forceMatrix +
-                indexBodyForce * pitchBytesForceMatrix +
-                indexBodyInfluence * sizeof(types::Vector<NDim,TElem>)));
+                indexBodyForce * pitchBytesForceMatrix));
 
         // Both exits?
         if( indexBodyInfluence >= numBodies || indexBodyForce >= numBodies )
@@ -103,7 +102,7 @@ public:
         else if( indexBodyForce == indexBodyInfluence )
         {
             // forceMatrix[ matrixIdx ] =
-            *matrixPtr =
+            matrixRow[indexBodyInfluence] =
                 types::Vector<NDim,TElem>(0.0f);
         }
         // One body influences a different body
@@ -137,7 +136,7 @@ public:
 
             // Save value
             // forceMatrix[ matrixIdx ] = result;
-            *matrixPtr = result;
+            matrixRow[indexBodyInfluence] = result;
         }
     }
 };
