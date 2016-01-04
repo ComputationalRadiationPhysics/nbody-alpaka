@@ -69,7 +69,8 @@ public:
         types::Vector<NDim,TElem> * const forceMatrix,
         TSize const & pitchBytesForceMatrix,
         TSize const & numBodies,
-        TElem const & gravitationalConstant,
+        // Wird von UpdatePositionsKernel genutzt
+        // TElem const & gravitationalConstant, 
         TElem const & smoothnessFactor ) const
     -> void
     {
@@ -88,14 +89,15 @@ public:
 
         // auto const matrixIdx(
         //         indexBodyForce * pitchSizeForceMatrix + indexBodyInfluence );
-        // Warning: The following is necessary as the pitchBytes may not be divisable by
-        // the size of Vector<NDim,TElem>. e.g. Vector<3,float>'s size is 12 bytes
+        // Warning: The following is necessary as the pitchBytes may not be
+        // divisable by the size of Vector<NDim,TElem>. e.g. Vector<3,float>'s 
+        // size is 12 bytes
         types::Vector<NDim,TElem> * const matrixRow(
             (types::Vector<NDim,TElem>*)(
                 (char*)forceMatrix +
                 indexBodyForce * pitchBytesForceMatrix));
 
-        // Both exits?
+        // Both exist?
         if( indexBodyInfluence >= numBodies || indexBodyForce >= numBodies )
             return;
         // A body does not influence itself
@@ -106,7 +108,6 @@ public:
                 types::Vector<NDim,TElem>(0.0f);
         }
         // One body influences a different body
-
         else
         {
             // position of influencing relative to influenced body
@@ -118,8 +119,9 @@ public:
             // force scalar and normalizing factor
             // force scalar * 1/(distance)
             TElem const forceFactor(
-                    gravitationalConstant *
-                    bodiesMass[indexBodyForce] *
+                    //This is handled by the UpdatePositionsKernel
+                    //gravitationalConstant *
+                    //bodiesMass[indexBodyForce] *
                     bodiesMass[indexBodyInfluence] /
                     (
                         alpaka::math::pow(
