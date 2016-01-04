@@ -1,5 +1,5 @@
 /** Kernel for the calculation of the Force Matrix
- * 
+ *
  * This file implements an Alpaka Kernel
  * for the n body simulation. The kernel
  * utilizes position and mass to calculate
@@ -8,7 +8,7 @@
  * @file forceMatrixKernel.hpp
  * @author Valentin Gehrke
  * @version 0.1
- * @date Thursday, 17. December 2015 21:31 
+ * @date Thursday, 17. December 2015 21:31
  */
 
 #pragma once
@@ -28,7 +28,7 @@ namespace kernels {
 /** Class containing the Force Matrix Kernel
  *
  * This class contains the Force Matrix Kernel
- * 
+ *
  */
 class ForceMatrixKernel
 {
@@ -44,7 +44,7 @@ public:
      *
      * The gravitationalConstant is
      * G = 6.674 * 10^−11 N*m^2/kg^2
-     * 
+     *
      * @tparam TAcc Accelerator type
      * @tparam NDim Dimension of the vectors
      * @tparam TElem datatype of mass and position
@@ -54,7 +54,7 @@ public:
      * @param forceMatrix Force Matrix as one dimensional array
      * @param gravitationalConstant constant G
      * @param smoothnessFactor Smoothness Factor
-     * 
+     *
      */
     ALPAKA_NO_HOST_ACC_WARNING
     template<
@@ -67,9 +67,10 @@ public:
         types::Vector<NDim,TElem> const * const bodiesPosition,
         TElem const * const bodiesMass,
         types::Vector<NDim,TElem> * const forceMatrix,
-        TSize const & pitchSizeForceMatrix,
+        TSize const & pitchBytesForceMatrix,
         TSize const & numBodies,
-        TElem const & gravitationalConstant,
+        // Wird von UpdatePositionsKernel genutzt
+        // TElem const & gravitationalConstant, 
         TElem const & smoothnessFactor ) const
     -> void
     {
@@ -86,22 +87,30 @@ public:
                 alpaka::idx::getIdx< alpaka::Grid,alpaka::Threads >
                     ( acc )[ 1u ]);
 
-        auto const matrixIdx(
-                indexBodyForce * pitchSizeForceMatrix + indexBodyInfluence );
-        
-        // Both exits?
+        // auto const matrixIdx(
+        //         indexBodyForce * pitchSizeForceMatrix + indexBodyInfluence );
+        // Warning: The following is necessary as the pitchBytes may not be
+        // divisable by the size of Vector<NDim,TElem>. e.g. Vector<3,float>'s 
+        // size is 12 bytes
+        types::Vector<NDim,TElem> * const matrixRow(
+            (types::Vector<NDim,TElem>*)(
+                (char*)forceMatrix +
+                indexBodyForce * pitchBytesForceMatrix));
+
+        // Both exist?
         if( indexBodyInfluence >= numBodies || indexBodyForce >= numBodies )
             return;
         // A body does not influence itself
         else if( indexBodyForce == indexBodyInfluence )
         {
-            forceMatrix[ matrixIdx ] = 
+            // forceMatrix[ matrixIdx ] =
+            matrixRow[indexBodyInfluence] =
                 types::Vector<NDim,TElem>(0.0f);
         }
         // One body influences a different body
         else
         {
-            // position of influencing relative to influenced body 
+            // position of influencing relative to influenced body
             // ( direction of force )
             types::Vector<NDim,TElem> const positionRelative(
                     bodiesPosition[ indexBodyInfluence ] -
@@ -110,8 +119,9 @@ public:
             // force scalar and normalizing factor
             // force scalar * 1/(distance)
             TElem const forceFactor(
-                    gravitationalConstant *
-                    bodiesMass[indexBodyForce] *
+                    //This is handled by the UpdatePositionsKernel
+                    //gravitationalConstant *
+                    //bodiesMass[indexBodyForce] *
                     bodiesMass[indexBodyInfluence] /
                     (
                         alpaka::math::pow(
@@ -125,9 +135,10 @@ public:
                     ));
 
             auto const result = forceFactor * positionRelative;
-            
+
             // Save value
-            forceMatrix[ matrixIdx ] = result;
+            // forceMatrix[ matrixIdx ] = result;
+            matrixRow[indexBodyInfluence] = result;
         }
     }
 };
