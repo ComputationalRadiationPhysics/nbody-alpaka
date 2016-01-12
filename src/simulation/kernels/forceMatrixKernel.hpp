@@ -81,13 +81,13 @@ public:
         auto const blockSizeX(
                 alpaka::workdiv::getWorkDiv<
                     alpaka::Block,
-                    alpaka::Thread>
+                    alpaka::Threads>
                     (acc)[0u]);
 
         auto const blockSizeY(
                 alpaka::workdiv::getWorkDiv<
                     alpaka::Block,
-                    alpaka::Thread>
+                    alpaka::Threads>
                     (acc)[1u]);
 
         char * const sharedMem(
