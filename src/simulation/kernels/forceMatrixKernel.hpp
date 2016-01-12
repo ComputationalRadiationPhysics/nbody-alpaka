@@ -129,7 +129,7 @@ public:
             sharedMassInfluencing[ blockBodyInfluencing ] =
                 bodiesMass[ indexBodyInfluencing ];
         }
-        
+
         // first Col fills shared mem for all cols
         if(blockBodyInfluencing == 0) {
             sharedPositionInfluenced[ blockBodyInfluenced ] =
@@ -232,7 +232,7 @@ struct BlockSharedExternMemSizeBytes<
         TSize const & numBodies,
         // Wird von UpdatePositionsKernel genutzt
         // TElem const & gravitationalConstant,
-        TElem const & smoothnessFactor ) 
+        TElem const & smoothnessFactor )
     -> size::Size<TAcc>
     {
         // Ignore unused
