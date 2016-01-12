@@ -172,7 +172,9 @@ public:
                     positionRelative.absSq() +
                     smoothnessFactor);
 
-            auto const rdist(alpaka::math::rsqrt(acc,dist));
+            auto const distCb(dist*dist*dist);
+
+            auto const rdistCb(alpaka::math::rsqrt(acc,distCb));
             // force scalar and normalizing factor
             // force scalar * 1/(distance)
             TElem const forceFactor(
@@ -180,7 +182,7 @@ public:
                     //gravitationalConstant *
                     //bodiesMass[indexBodyInfluenced] *
                     sharedMassInfluencing[blockBodyInfluencing] *
-                    rdist);
+                    rdistCb);
 
             auto const result = forceFactor * positionRelative;
 
