@@ -91,7 +91,7 @@ public:
                     (acc)[1u]);
 
         char * const sharedMem(
-                alapaka::block::shared::dyn::getMem< char >(acc) );
+                alpaka::block::shared::dyn::getMem< char >(acc) );
 
         types::Vector<NDim,TElem> * const sharedPositionInfluencing(
                 ( types::Vector<NDim,TElem> * )sharedMem);
@@ -207,7 +207,7 @@ namespace traits {
 
 template<
     typename TAcc>
-struct getBlockSharedMemDynSizeBytes<
+struct BlockSharedMemDynSizeBytes<
     nbody::simulation::kernels::ForceMatrixKernel,
     TAcc>
 {
