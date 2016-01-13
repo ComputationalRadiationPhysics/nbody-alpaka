@@ -91,8 +91,7 @@ public:
                     (acc)[1u]);
 
         char * const sharedMem(
-                acc.template getBlockSharedExternMem<
-                    char >( ) );
+                alapaka::block::shared::dyn::getMem< char >(acc) );
 
         types::Vector<NDim,TElem> * const sharedPositionInfluencing(
                 ( types::Vector<NDim,TElem> * )sharedMem);
@@ -208,7 +207,7 @@ namespace traits {
 
 template<
     typename TAcc>
-struct BlockSharedExternMemSizeBytes<
+struct getBlockSharedMemDynSizeBytes<
     nbody::simulation::kernels::ForceMatrixKernel,
     TAcc>
 {
@@ -217,7 +216,7 @@ struct BlockSharedExternMemSizeBytes<
         std::size_t NDim,
         typename TElem,
         typename TSize>
-    ALPAKA_FN_HOST static auto getBlockSharedExternMemSizeBytes(
+    ALPAKA_FN_HOST static auto getBlockSharedMemDynSizeBytes(
         alpaka::Vec<
             alpaka::dim::Dim< TAcc >,
             size::Size< TAcc > >
