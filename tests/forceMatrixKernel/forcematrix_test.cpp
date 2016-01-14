@@ -231,7 +231,7 @@ BOOST_AUTO_TEST_CASE( forceMatrix2D )
 
     printf("Test with CPU\n");
     Vector2F* forceMatrix = createForceMatrix<
-        alpaka::acc::AccCpuSerial<
+        alpaka::acc::AccCpuOmp2Threads<
             alpaka::dim::DimInt<2u>,
             std::size_t >,
         alpaka::stream::StreamCpuSync
@@ -306,7 +306,7 @@ BOOST_AUTO_TEST_CASE( forceMatrix3D )
 
     printf("Test with CPU\n");
     Vector3F* forceMatrix = createForceMatrix<
-        alpaka::acc::AccCpuSerial<
+        alpaka::acc::AccCpuOmp2Threads<
             alpaka::dim::DimInt<2u>,
             std::size_t >,
         alpaka::stream::StreamCpuSync

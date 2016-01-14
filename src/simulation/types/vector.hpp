@@ -43,6 +43,8 @@ class Vector
 private:
     TElem coord[ NDim ];
 public:
+    std::size_t const static dim = NDim;
+    typedef TElem type;
     /** Empty constructor
      *
      * This constructor just creates a Vector
