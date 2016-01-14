@@ -215,6 +215,23 @@ public:
 
     }
 
+    types::Vector<NDim,TElem> getPositions(){
+        if(stepFlag)
+        {
+            alpaka::Vec<
+                alpaka::dim::DimInt<1u>,TSize>
+                const extentBodies(numBodies);
+
+            alpaka::mem::view::copy(
+                * stream,
+                * hostBodiesPosition,
+                accBodiesPosition,
+                extentBodies);
+        }
+        stepFlag=0;
+        return alpaka::mem::view::getPtrNative(hostBodiesPosition),
+    }
+
 }
 } //end namespace simulation
 } //end namespace nbody
