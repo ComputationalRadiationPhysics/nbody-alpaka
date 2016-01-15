@@ -12,7 +12,7 @@ namespace nbody {
 
 namespace simulation {
     
-    /** Class  Simulation
+    /** Class Simulation
      *
      * This Class provides an esay interface to the N-body simulation
      */
@@ -60,7 +60,7 @@ private:
     float gravitationalConstant(6.674e-11);
     float smoothnessFactor;
     //flag if a new step had been done
-    int stepFlag(0);
+    bool stepFlag(true);
 public:
     /**
      */
@@ -75,7 +75,7 @@ public:
         this->devAcc = alpaka::dev::DevMan<TAcc>::getDevByIdx(0);
         this->stream = new TStream(this->devAcc);
         this->devHost = alpaka::dev::DevManCpu::getDevByIdx(0);
-        /*** Work extend ***/
+        /*** Work extent ***/
         alpaka::Vec<
             alpaka::dim::DimInt<1u>,TSize>
             const extentBodies(numBodies);
@@ -84,7 +84,7 @@ public:
             alpaka::dim::DimInt<2u>,TSize>
             const extentForceMatrix(numBodies,numBodies);
 
-        /***Memory Host***/
+        /*** Memory Host ***/
 
         this->numBodies = numBodies;
         this->smoothnesFactor = smoothnessFactor;
@@ -109,44 +109,44 @@ public:
 
         /*** Memory Acc ***/
 
-        this-> accForceMatrix=
-            alpaka::mem::buf::alloc<Vector,Size>(devAcc, extentForceMatrix);
+        this-> accForceMatrix =
+            alpaka::mem::buf::alloc<Vector,Size>( devAcc, extentForceMatrix );
 
-        this->accBodiesPosition=
-            alpaka::mem::buf::alloc<Vector, Size>(devAcc, extentBodies);
+        this->accBodiesPosition =
+            alpaka::mem::buf::alloc<Vector, Size>( devAcc, extentBodies );
 
-        this->accBufBodiesVelocity=
-            alpaka::mem::buf::alloc<Vector, Size>(devAcc, extentBodies);
+        this->accBufBodiesVelocity =
+            alpaka::mem::buf::alloc<Vector, Size>( devAcc, extentBodies );
 
-        this->accBufBodiesMass=
-            alpaka::mem::buf::alloc<float, Size>(devAcc, extentBodies);
+        this->accBufBodiesMass =
+            alpaka::mem::buf::alloc<float, Size>( devAcc, extentBodies );
 
         /*** Memory copy ***/
         alpaka::mem::view::copy(
             * stream,
             accBodiesPosition,
             * hostBodiesPosition,
-            extentBodies);
+            extentBodies );
 
         alpaka::mem::view::copy(
             * stream,
             accBodiesVelocity,
             * hostBodiesVelocity,
-            extentBodies);
+            extentBodies );
 
         alpaka::mem::view::copy(
             * stream,
             accBodiesMass,
             * hostBodiesMass,
-            extentBodies);
+            extentBodies );
         //Wait for data
-        alpaka::wait::wait( * stream);
+        alpaka::wait::wait( * stream );
 
     }
     /*** Funtion to execute a simulation step ***/
     void step(TTime dt)
     {   
-        this->stepFlag=1;
+        this->stepFlag = true;
 
         //Executing the ForceMatrixKernel
         auto const workDivForceM(
@@ -159,7 +159,7 @@ public:
                     >::ones(),
                     false,
                     alpaka::workdiv::GridBlockExtendSubDivRestrictions::
-                    Unrestricted
+                    EqualExtent
                 )
         );
         kernels::ForceMatrixKernel forceMatrixKernel;
@@ -179,9 +179,9 @@ public:
                 )
         );
         
-        alpaka::stream::enqueue( * stream, forceKernelEcec);
+        alpaka::stream::enqueue( * stream, forceKernelExec);
 
-        /***Ececute updatePositionKernel***/
+        /*** Execute updatePositionKernel ***/
         auto const workDivUpdatePositions(
                 alpaka::workdiv::getValidWorkDiv< TAcc >(
                     devAcc,
@@ -205,7 +205,7 @@ public:
                     alpaka::mem::view::getPtrNative( accBodiesVelocity ),
                     static_cast<TSize>(
                         alpaka::mem::view::getPitchBytes<1u>
-                            (accForceMatrix)
+                            ( accForceMatrix )
                     ),
                     numBodies,
                     gravitationalConstant,
@@ -232,6 +232,8 @@ public:
         return alpaka::mem::view::getPtrNative(hostBodiesPosition),
     }
 
-}
+};
+
 } //end namespace simulation
+
 } //end namespace nbody
