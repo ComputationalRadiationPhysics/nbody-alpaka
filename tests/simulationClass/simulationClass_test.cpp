@@ -1,5 +1,5 @@
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE ForceMatrixTest
+#define BOOST_TEST_MODULE SimulationClassTest
 #include <iostream> // std::cout, std::endl;
 #include <simulation/types/vector.hpp> //Vector
 #include <simulation/simulation.hpp> // Simulation
@@ -25,6 +25,18 @@ BOOST_AUTO_TEST_CASE( simulationClass )
     float smoothnessFactor = 1e-8;
 
     Simulation<
-        alpaka::AccCpuSerial
+        2,
+        float,
+        float,
+        std::size_t> sim = new Simulation(
+                bodiesPosition,
+                bodiesVelocity,
+                bodiesMass,
+                numBodies,
+                smoothnessFactor );
+
+    for(unsigned int i(0); i < 10; i++) {
+        sim.step(0.1f);
+    }
     
 }
