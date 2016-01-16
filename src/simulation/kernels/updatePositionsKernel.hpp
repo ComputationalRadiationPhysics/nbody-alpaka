@@ -53,35 +53,46 @@ public:
             alpaka::dim::Dim<TAcc>::value == 1,
             "This kernel required 1-dimensional indices");
 		
-        auto const threadIdx(
+        auto const gridThreadIdx(
             alpaka::idx::getIdx<alpaka::Grid, alpaka::Threads>(acc)[0u]);
-		
+		auto const threadElemExtent(alpaka::workdiv::getWorkDiv<alpaka::
+                Thread, alpaka::Elems>(acc)[0u]);
+        auto const threadFirstElemIdx(gridThreadIdx *threadElemExtent);
+
     //Check if out of range
-        if(threadIdx>=numBodies)
+        if(threadFirstElemIdx>=numBodies)
             return;
 
     //Sum up the "forces"(accelerations/gravitationalConstant)
+        //Calculate last element+1 
+        auto const threadLastElemIdxHelp(
+                threadElemExtent+threadFirstElemIdx);
+        auto const threadLastElemIdx(
+                (threadLastElemIdxHelp > numBodies) ? 
+                numBodies : threadLastElemIdxHelp);
+        for(TSize p(threadFirstElemIdx); p< threadLastElemIdx;p++)
+        { 
         //calculate begin of line
-        
-        types::Vector<NDim,TElem> * beginOfLine(
-                (types::Vector<NDim,TElem>*)(
-                    (char*)forceMatrix +
-                    threadIdx * pitchSizeForceMatrix)
-                );
+            types::Vector<NDim,TElem> * beginOfLine(
+                    (types::Vector<NDim,TElem>*)(
+                        (char*)forceMatrix +
+                        p * pitchSizeForceMatrix)
+                    );
 
-        types::Vector<NDim,TElem> acceleration(static_cast<TElem>(0));
-		for(std::size_t i(0); i< numBodies;i++)
-        {
-			acceleration+=beginOfLine[i];
-		}
-        acceleration=acceleration*gravitationalConstant;
-        //calculate new position p=a/2*dt² +v*dt + p_0
-        bodiesPosition[threadIdx]+= (acceleration/(2)*dt+
-            bodiesVelocity[threadIdx])*dt;
-		//calculate velocity v=a*dt
-		bodiesVelocity[threadIdx]+=acceleration*dt;
+            types::Vector<NDim,TElem> acceleration(static_cast<TElem>(0));
+            for(std::size_t i(0); i< numBodies;i++)
+            {
+                acceleration+=beginOfLine[i];
+            }
+            acceleration=acceleration*gravitationalConstant;
+            //calculate new position p=a/2*dt² +v*dt + p_0
+            bodiesPosition[p]+= (acceleration/(2)*dt+
+            bodiesVelocity[p])*dt;
+            //calculate velocity v=a*dt
+            bodiesVelocity[p]+=acceleration*dt;
 		
-	}
+	    }
+    }
 };
 
 } // namespace kernels
