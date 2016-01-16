@@ -286,7 +286,7 @@ public:
 
     }
 
-    types::Vector<NDim,TElem> getPositions(){
+    types::Vector<NDim,TElem> * getPositions(){
         if(stepFlag)
         {
             alpaka::Vec<
