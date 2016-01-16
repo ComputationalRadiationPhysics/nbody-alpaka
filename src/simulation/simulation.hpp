@@ -110,7 +110,6 @@ public:
         hostBodiesPosition(bodiesPosition, devHost, extentBodies),
         hostBodiesVelocity(bodiesVelocity, devHost, extentBodies),
         hostBodiesMass(bodiesMass, devHost, extentBodies),
-
         accForceMatrix( alpaka::mem::buf::alloc<types::Vector<NDim,TElem> , TSize>
             ( devAccForceM, extentForceMatrix ) ),
         accBodiesPosition( alpaka::mem::buf::alloc<types::Vector<NDim,TElem> , TSize>
@@ -119,63 +118,11 @@ public:
             ( devAccForceM, extentBodies ) ),
         accBodiesMass( alpaka::mem::buf::alloc<TElem , TSize>
             ( devAccForceM, extentBodies ) ),
-
         numBodies(numBodies),
         gravitationalConstant(gravitationalConstant),
         smoothnessFactor(smoothnessFactor)
 
     {
-        /*** Devices ***/
-        // this->devAccForceM = alpaka::dev::DevMan<ACC_FORCEM>::getDevByIdx(0);
-        // this->devAccUpdateP = alpaka::dev::DevMan<ACC_UPDATEP>::getDevByIdx(0);
-        // this->devHost = alpaka::dev::DevManCpu::getDevByIdx(0);
-        // this->streamForceM = new STREAM(this->devAccForceM);
-        // this->streamUpdateP = new STREAM(this->devAccUpdateP);
-
-        /*** Work extent ***/
-
-        /*** Memory Host ***/
-
-        // this->numBodies = numBodies;
-        // this->smoothnessFactor = smoothnessFactor;
-
-        // this->hostBodiesPosition = new alpaka::mem::view::ViewPlainPtr<
-        //     // std::decay<decltype(devHost)>::type,
-        //     alpaka::dev::DevCpu,
-        //     types::Vector<NDim,TElem>,
-        //     alpaka::dim::DimInt<1u>,
-        //     TSize>(bodiesPosition, this->devHost, extentBodies);
-
-        // this->hostBodiesVelocity = new alpaka::mem::view::ViewPlainPtr<
-        //     // std::decay<decltype(devHost)>::type,
-        //     alpaka::dev::DevCpu,
-        //     types::Vector<NDim,TElem>,
-        //     alpaka::dim::DimInt<1u>,
-        //     TSize>(bodiesVelocity, this->devHost, extentBodies);
-
-        // this->hostBodiesMass = new alpaka::mem::view::ViewPlainPtr<
-        //     // std::decay<decltype(devHost)>::type,
-        //     alpaka::dev::DevCpu,
-        //     TElem,
-        //     alpaka::dim::DimInt<1u>,
-        //     TSize>(bodiesMass, this->devHost, extentBodies);
-
-        /*** Memory Acc ***/
-
-        // this->accForceMatrix =
-        //     alpaka::mem::buf::alloc<types::Vector<NDim,TElem> , TSize>
-        //         ( devAccForceM, extentForceMatrix );
-
-        // this->accBodiesPosition =
-        //     alpaka::mem::buf::alloc<types::Vector<NDim,TElem> , TSize>
-        //         ( devAccForceM, extentBodies );
-
-        // this->accBufBodiesVelocity =
-        //     alpaka::mem::buf::alloc<types::Vector<NDim,TElem> , TSize>
-        //         ( devAccForceM, extentBodies );
-
-        // this->accBufBodiesMass =
-        //     alpaka::mem::buf::alloc<float, TSize>( devAccForceM, extentBodies );
 
         /*** Memory copy ***/
         alpaka::mem::view::copy(
@@ -203,15 +150,6 @@ public:
     void step(TTime dt)
     {   
         this->stepFlag = true;
-
-        // Extents
-        alpaka::Vec<
-            alpaka::dim::DimInt<2u>,TSize>
-            const extentForceMatrix(numBodies,numBodies);
-
-        alpaka::Vec<
-            alpaka::dim::DimInt<1u>,TSize>
-            const extentBodies(numBodies);
 
         //Executing the ForceMatrixKernel
         auto const workDivForceM(
@@ -289,15 +227,13 @@ public:
     types::Vector<NDim,TElem> * getPositions(){
         if(stepFlag)
         {
-            alpaka::Vec<
-                alpaka::dim::DimInt<1u>,TSize>
-                const extentBodies(numBodies);
-
             alpaka::mem::view::copy(
                 streamForceM,
                 hostBodiesPosition,
                 accBodiesPosition,
                 extentBodies);
+
+            alpaka::wait::wait( streamForceM );
         }
         stepFlag = false;
         return alpaka::mem::view::getPtrNative(hostBodiesPosition);
