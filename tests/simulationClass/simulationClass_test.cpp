@@ -7,6 +7,31 @@
 
 using namespace nbody::simulation;
 
+template<
+    std::size_t NDim,
+    typename TElem
+>
+std::ostream& operator<<(std::ostream & s, types::Vector<NDim, TElem> vec) {
+    s << "(" << vec[0];
+    for(unsigned int i = 1; i < NDim; i++) {
+        s << ", " << vec[i];
+    }
+    s << ")";
+    return s;
+}
+
+template<
+    std::size_t NDim,
+    typename TElem
+>
+bool operator==(types::Vector<NDim,TElem> const a, types::Vector<NDim,TElem> const b) {
+    for(std::size_t i = 0; i < 2; i++) {
+        if(a[i] != b[i])
+            return false;
+    }
+    return true;
+}
+
 BOOST_AUTO_TEST_CASE( simulationClass )
 {
     types::Vector<2,float> bodiesPosition[2] = {
@@ -24,6 +49,8 @@ BOOST_AUTO_TEST_CASE( simulationClass )
 
     float smoothnessFactor = 1e-8;
 
+    float gravitationalConstant = 0.2f;
+
     Simulation<
         2,
         float,
@@ -33,10 +60,21 @@ BOOST_AUTO_TEST_CASE( simulationClass )
                 bodiesVelocity,
                 bodiesMass,
                 numBodies,
-                smoothnessFactor );
+                smoothnessFactor,
+                gravitationalConstant);
 
     for(unsigned int i(0); i < 10; i++) {
         sim.step(0.1f);
     }
+
+    types::Vector<2, float> * result = sim.getPositions();
+
+    for(unsigned int i(0); i < 2; i++) {
+        std::cout << result[i] << std::endl;
+    }
+
+    bool b = ( result[0] + result[1] == types::Vector<2,float>{1.0f,1.0f} );
+    BOOST_CHECK( b );
+
     
 }
