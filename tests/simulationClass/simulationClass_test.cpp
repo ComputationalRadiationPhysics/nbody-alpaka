@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_CASE( simulationClass )
         2,
         float,
         float,
-        std::size_t> sim = new Simulation(
+        std::size_t> sim(
                 bodiesPosition,
                 bodiesVelocity,
                 bodiesMass,
