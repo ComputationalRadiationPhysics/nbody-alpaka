@@ -86,7 +86,7 @@ private:
             <TElem, TSize>(devAccForceM, 1) ) accBodiesMass;
 
     TSize numBodies;
-    float gravitationalConstant = 6.674e-11;
+    float gravitationalConstant;// = 6.674e-11;
     float smoothnessFactor;
     //flag if a new step had been done
     bool stepFlag = true;
@@ -98,7 +98,8 @@ public:
             types::Vector<NDim,TElem> * bodiesVelocity,
             TElem * bodiesMass,
             TSize numBodies,
-            float smoothnessFactor) :
+            float smoothnessFactor,
+            float gravitationalConstant) :
         devAccForceM(alpaka::dev::DevMan<ACC_FORCEM>::getDevByIdx(0)),
         devAccUpdateP(alpaka::dev::DevMan<ACC_FORCEM>::getDevByIdx(0)),
         streamForceM(devAccForceM),
@@ -120,6 +121,7 @@ public:
             ( devAccForceM, extentBodies ) ),
 
         numBodies(numBodies),
+        gravitationalConstant(gravitationalConstant),
         smoothnessFactor(smoothnessFactor)
 
     {
