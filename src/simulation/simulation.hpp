@@ -8,6 +8,20 @@
 // Vector
 #include <simulation/kernels/types/vector.hpp> 
 
+#if defined(ALPAKA_ACC_GPU_CUDA_ENABLE)
+    #define ACC_FORCEM AccGpuCudaRt<alpaka::dim::DimInt<2u>,std::size_t>
+    #define ACC_UPDATEP AccGpuCudaRt<alpaka::dim::DimInt<1u>,std::size_t>
+    #define STREAM StreamGpuCudaRtSync
+#elif defined(ALPAKA_ACC_CPU_BT_OMP4_ENABLE)
+    #define ACC_FORCEM AccCpuOmp4<alpaka::dim::DimInt<2u>,std::size_t>
+    #define ACC_UPDATEP AccCpuOmp4<alpaka::dim::DimInt<1u>,std::size_t>
+    #define STREAM StreamCpuSync
+#elif defined(ALPAKA_ACC_CPU_B_OMP2_T_SEQ_ENABLE)
+    #define ACC_FORCEM AccCpuSerial<alpaka::dim::DimInt<2u>,std::size_t>
+    #define ACC_UPDATEP AccCpuSerial<alpaka::dim::DimInt<1u>,std::size_t>
+    #define STREAM StreamCpuSync
+#endif
+    
 namespace nbody {
 
 namespace simulation {
@@ -17,19 +31,19 @@ namespace simulation {
      * This Class provides an esay interface to the N-body simulation
      */
 template<
-    typename TAcc,
-    typename TStream,
     TSize NDim,
     typename TElem,
     typename TTime,
-    typname TSize
+    typename TSize
     >
 class Simulation
 {
 private:
     //alpaka
-    TStream * stream;
-    TAcc devAcc;
+    STREAM * streamForceM;
+    STREAM * streamUpdateP;
+    ACC_FORCEM devAccForceM;
+    ACC_UPDATEP devAccUpdateP
     alpaca::dev::DevCpu devHost;
     TSize pitchBytesForceMatrix;
     
@@ -72,9 +86,12 @@ public:
             float smoothnessFactor)
     {
         /*** Devices ***/
-        this->devAcc = alpaka::dev::DevMan<TAcc>::getDevByIdx(0);
-        this->stream = new TStream(this->devAcc);
+        this->devAccForceM = alpaka::dev::DevMan<ACC_FORCEM>::getDevByIdx(0);
+        this->devAccUpdatP = alpaka::dev::DevMan<ACC_UPDATEP>::getDevByIdx(0);
         this->devHost = alpaka::dev::DevManCpu::getDevByIdx(0);
+        this->streamForceM = new STREAM(this->devAccForceM);
+        this->streamUpdateP = new STREAM(this->devAccUpdateP);
+
         /*** Work extent ***/
         alpaka::Vec<
             alpaka::dim::DimInt<1u>,TSize>
@@ -110,32 +127,32 @@ public:
         /*** Memory Acc ***/
 
         this-> accForceMatrix =
-            alpaka::mem::buf::alloc<Vector,Size>( devAcc, extentForceMatrix );
+            alpaka::mem::buf::alloc<Vector,Size>( devAccForceM, extentForceMatrix );
 
         this->accBodiesPosition =
-            alpaka::mem::buf::alloc<Vector, Size>( devAcc, extentBodies );
+            alpaka::mem::buf::alloc<Vector, Size>( devAccForceM, extentBodies );
 
         this->accBufBodiesVelocity =
-            alpaka::mem::buf::alloc<Vector, Size>( devAcc, extentBodies );
+            alpaka::mem::buf::alloc<Vector, Size>( devAccForceM, extentBodies );
 
         this->accBufBodiesMass =
-            alpaka::mem::buf::alloc<float, Size>( devAcc, extentBodies );
+            alpaka::mem::buf::alloc<float, Size>( devAccForceM, extentBodies );
 
         /*** Memory copy ***/
         alpaka::mem::view::copy(
-            * stream,
+            * streamForceM,
             accBodiesPosition,
             * hostBodiesPosition,
             extentBodies );
 
         alpaka::mem::view::copy(
-            * stream,
+            * streamForceM,
             accBodiesVelocity,
             * hostBodiesVelocity,
             extentBodies );
 
         alpaka::mem::view::copy(
-            * stream,
+            * streamForceM,
             accBodiesMass,
             * hostBodiesMass,
             extentBodies );
@@ -150,8 +167,8 @@ public:
 
         //Executing the ForceMatrixKernel
         auto const workDivForceM(
-                alpaka::workdiv::getValidWorkDiv< TAcc >(
-                    devAcc,
+                alpaka::workdiv::getValidWorkDiv< ACC_FORCEM >(
+                    devAccForceM,
                     extentForceMatrix,
                     alpaka::Vec<
                         alpaka::Dim::DimInt<2u>,
@@ -162,9 +179,11 @@ public:
                     EqualExtent
                 )
         );
+
         kernels::ForceMatrixKernel forceMatrixKernel;
+
         auto const forceKernelExec(
-                alpaka::exec::create<TAcc>(
+                alpaka::exec::create<ACC_FORCEM>(
                     workDivForce,
                     forceMatrixKernel,
                     alpaka::mem::view::getPtrNative( accBodiesPosition ),
@@ -179,12 +198,12 @@ public:
                 )
         );
         
-        alpaka::stream::enqueue( * stream, forceKernelExec);
+        alpaka::stream::enqueue( * streamForceM, forceKernelExec);
 
         /*** Execute updatePositionKernel ***/
         auto const workDivUpdatePositions(
-                alpaka::workdiv::getValidWorkDiv< TAcc >(
-                    devAcc,
+                alpaka::workdiv::getValidWorkDiv< ACC_UPDATEP >(
+                    devAccUpdateP,
                     extentBodies,
                     alpaka::Vec<
                         alpaka::Dim::DimInt<1u>,
@@ -197,7 +216,7 @@ public:
         );
         kernels::UpdatePositionsKernel updatePositionsKernel;
         auto const forceKernelExec(
-                alpaka::exec::create<TAcc>(
+                alpaka::exec::create<ACC_UPDATEP>(
                     workDivUpdatePositions,
                     updatePositionsKernel,
                     alpaka::mem::view::getPtrNative( accForceMatrix ),
@@ -223,7 +242,7 @@ public:
                 const extentBodies(numBodies);
 
             alpaka::mem::view::copy(
-                * stream,
+                * streamForceM,
                 * hostBodiesPosition,
                 accBodiesPosition,
                 extentBodies);
