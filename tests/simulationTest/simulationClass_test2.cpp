@@ -4,12 +4,12 @@
 #include <cstdlib>
 #include <ctime>
 
-#define N_BODIES 20
-#define SMOOTHNESS 1.1755e-38
-#define GRAV 6.67408e-10
-#define DTIME 36000
-#define STEPS 100
-#define INNER_STEP 1000
+#define N_BODIES 3
+#define SMOOTHNESS 2
+#define GRAV 0.1f
+#define DTIME 0.1f
+#define STEPS 1000
+#define INNER_STEP 100
 
 using namespace nbody::simulation;
 
@@ -21,15 +21,19 @@ int main (int argc, char *argv[]){
         float bodiesMass[N_BODIES];
         types::Vector<3,float>bodiesPosition[N_BODIES];
         types::Vector<3,float>bodiesVelocity[N_BODIES];
-        for(int i = 0; i< N_BODIES;i++)
+        for(int i = 1; i< N_BODIES;i++)
         {
-            bodiesMass[i]=2e30 *(0.5f+static_cast<float>(rand()/static_cast<float>(RAND_MAX/(10.0f-0.5f))));
-            bodiesPosition[i]={static_cast<float>(rand()/(static_cast<float> (RAND_MAX/3))),
-            static_cast<float>(rand()/(static_cast<float> (RAND_MAX/3))),
-            static_cast<float>(rand()/(static_cast<float> (RAND_MAX/3)))
+            bodiesMass[i]=static_cast<float>(rand())*5/RAND_MAX + 1.0f;
+            bodiesPosition[i]={
+                static_cast<float>( rand() % 101 ) - 50.0f,
+                static_cast<float>( rand() % 101 ) - 50.0f,
+                static_cast<float>( rand() % 101 ) - 50.0f
             };
-            bodiesPosition [i]= 9.5e12*bodiesPosition[i];
-            bodiesVelocity[i] = {0,0,0};
+            bodiesVelocity[i] = {
+               ( static_cast<float>( rand() % 3 ) - 1.0f ) / 30.f,
+               ( static_cast<float>( rand() % 3 ) - 1.0f ) / 30.f,
+               ( static_cast<float>( rand() % 3 ) - 1.0f ) / 30.f
+            };
         }
         //Init Simulation
         Simulation<
@@ -43,7 +47,6 @@ int main (int argc, char *argv[]){
                 N_BODIES,
                 SMOOTHNESS,
                 GRAV);
-        for (unsigned int i(0); i<100;i++) sim.step(DTIME); 
 
         //Print masses
         for (unsigned int i(0);i<N_BODIES;i++)
