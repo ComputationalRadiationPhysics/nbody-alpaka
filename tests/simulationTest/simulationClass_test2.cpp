@@ -21,9 +21,9 @@ int main (int argc, char *argv[]){
         float bodiesMass[N_BODIES];
         types::Vector<3,float>bodiesPosition[N_BODIES];
         types::Vector<3,float>bodiesVelocity[N_BODIES];
-        for(int i = 1; i< N_BODIES;i++)
+        for(int i = 0; i< N_BODIES;i++)
         {
-            bodiesMass[i]=static_cast<float>(rand())*5/RAND_MAX + 1.0f;
+            bodiesMass[i]=3.0f; //static_cast<float>(rand())*2/RAND_MAX + 2.0f;
             bodiesPosition[i]={
                 static_cast<float>( rand() % 101 ) - 50.0f,
                 static_cast<float>( rand() % 101 ) - 50.0f,
