@@ -16,6 +16,10 @@
     #define ACC_FORCEM alpaka::acc::AccCpuOmp4<alpaka::dim::DimInt<2u>,std::size_t>
     #define ACC_UPDATEP alpaka::acc::AccCpuOmp4<alpaka::dim::DimInt<1u>,std::size_t>
     #define STREAM alpaka::stream::StreamCpuSync
+#elif defined(ALPAKA_ACC_CPU_B_OMP2_T_SEQ_ENABLED)
+    #define ACC_FORCEM alpaka::acc::AccCpuOmp2Blocks<alpaka::dim::DimInt<2u>,std::size_t>
+    #define ACC_UPDATEP alpaka::acc::AccCpuOmp2Blocks<alpaka::dim::DimInt<1u>,std::size_t>
+    #define STREAM alpaka::stream::StreamCpuSync
 #else
     #define ACC_FORCEM alpaka::acc::AccCpuSerial<alpaka::dim::DimInt<2u>,std::size_t>
     #define ACC_UPDATEP alpaka::acc::AccCpuSerial<alpaka::dim::DimInt<1u>,std::size_t>
