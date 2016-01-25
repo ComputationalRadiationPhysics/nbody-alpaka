@@ -7,13 +7,13 @@
 #define N_BODIES 3
 #define SMOOTHNESS 2
 #define GRAV 0.1f
-#define DTIME 0.1f
+#define DTIME 0.01f
 #define STEPS 1000
-#define INNER_STEP 100
+#define INNER_STEP 1000
 
 using namespace nbody::simulation;
 
-int main (int argc, char *argv[]){
+int main (){
         //Init rand
         srand(static_cast<unsigned>(time(0)));
         
@@ -23,7 +23,7 @@ int main (int argc, char *argv[]){
         types::Vector<3,float>bodiesVelocity[N_BODIES];
         for(int i = 0; i< N_BODIES;i++)
         {
-            bodiesMass[i]=3.0f; //static_cast<float>(rand())*2/RAND_MAX + 2.0f;
+            bodiesMass[i] = static_cast<float>(rand())*2/RAND_MAX + 2.0f;
             bodiesPosition[i]={
                 static_cast<float>( rand() % 101 ) - 50.0f,
                 static_cast<float>( rand() % 101 ) - 50.0f,
