@@ -12,48 +12,21 @@
 
 using namespace nbody::simulation;
 
+//BOOST_AUTO_TEST_CASE_TEMPLATE( simulationBenchmark, T, test_cases )
 template<
-    typename TElem,
     std::size_t NDim,
-    std::size_t NSize>
-struct test_case {
-    typedef TElem elem_type;
-    static std::size_t const Dim = NDim;
-    static std::size_t const Size = NSize;
-};
-
-typedef boost::mpl::list<
-    test_case<float,2,128>,
-    test_case<float,2,256>,
-    test_case<float,2,512>,
-    test_case<float,2,1024>,
-    test_case<float,3,128>,
-    test_case<float,3,256>,
-    test_case<float,3,512>,
-    test_case<float,3,1024>,
-    test_case<double,2,128>,
-    test_case<double,2,256>,
-    test_case<double,2,512>,
-    test_case<double,2,1024>,
-    test_case<double,3,128>,
-    test_case<double,3,256>,
-    test_case<double,3,512>,
-    test_case<double,3,1024>
-> test_cases;
-
-BOOST_AUTO_TEST_CASE_TEMPLATE( simulationBenchmark, T, test_cases )
+    typename TElem>
+void runTest(std::size_t const NSize, std::size_t const NSteps)
 {
-    std::cout << T::Size << " bodies with "<< T::Dim << "-dimensional " <<  
-        boost::typeindex::type_id<typename T::elem_type>().pretty_name() << 
-        " vectors" << std::endl;
+    std::cout << NSize << " bodies with "<< NDim << "-dimensional " <<  
+        boost::typeindex::type_id<TElem>().pretty_name() << 
+        " vectors for " << NSteps << " steps" << std::endl;
 
-    std::size_t const NDim = T::Dim;
-    std::size_t const NSize = T::Size;
-    using TElem = typename T::elem_type;
-
-    types::Vector<NDim, TElem> bodiesPosition[NSize];
-    types::Vector<NDim, TElem> bodiesVelocity[NSize];
-    TElem bodiesMass[NSize];
+    types::Vector<NDim, TElem> * bodiesPosition =
+        new types::Vector<NDim, TElem>[NSize];
+    types::Vector<NDim, TElem> * bodiesVelocity =
+        new types::Vector<NDim, TElem>[NSize];
+    TElem * bodiesMass = new TElem[NSize];
 
     for(std::size_t i = 0; i < NSize; i++) {
         bodiesPosition[i] = types::Vector<NDim,TElem>( static_cast<TElem>(0) );
@@ -78,12 +51,28 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( simulationBenchmark, T, test_cases )
 
     float tStart, tEnd;
     tStart = GET_CLOCK();
-    for(std::size_t i = 0; i < 100; i++) {
+    for(std::size_t i = 0; i < NSteps; i++) {
         sim.step(0.1f);
     }
     tEnd = GET_CLOCK();
 
     std::cout << "Time: " << (tEnd - tStart) << " secs" << std::endl;
+
+    delete[] bodiesPosition;
+    delete[] bodiesVelocity;
+    delete[] bodiesMass;
+}
+
+BOOST_AUTO_TEST_CASE( benchmark )
+{
+    runTest< 2,   float>(  128, 100 );
+    runTest< 2,   float>(  256, 100 );
+    runTest< 2,   float>(  512, 100 );
+    runTest< 2,   float>( 1024, 100 );
+    runTest< 3,   float>(  128, 100 );
+    runTest< 3,   float>(  256, 100 );
+    runTest< 3,   float>(  512, 100 );
+    runTest< 3,   float>( 1024, 100 );
 }
 
 /* BOOST_AUTO_TEST_CASE( simulationClass )
