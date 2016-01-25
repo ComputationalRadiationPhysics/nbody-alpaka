@@ -10,7 +10,6 @@ def main(filename, framerate):
     lines = datas.split('\n')
     masses=[(float(mass)) for mass in lines[0].split(' ')]
 
-    #Initialization
     steps = []
     for line in lines[1:]:
         if len(line.strip()) < 3:
@@ -21,12 +20,24 @@ def main(filename, framerate):
             bodies.append(point)
         steps.append(bodies)
 
-    v_points=[]
-    for i,position in enumerate(steps[0]):
-        v_points.append( sphere(pos=position,radius= 4 * masses[i]**0.3, color = color.white,  make_trail=True, material=materials.diffuse, retain=400))
+    colors = [
+        color.red,
+        color.yellow,
+        color.green,
+        color.orange,
+        color.white,
+        color.blue,
+        color.magenta
+    ]
 
-    #Update positions
-    while True :
+    #Run steps
+    while True:
+        v_points=[]
+        for i,position in enumerate(steps[0]):
+            objectcolor = colors[ i % len(colors) ]
+            object = sphere(pos=position,radius= 4 * masses[i]**0.3, color = objectcolor, material=materials.diffuse, make_trail = True)
+            v_points.append( object )
+
         for step in steps:
             if len(step) != len(v_points):
                 print "Invalid step found"
@@ -41,6 +52,11 @@ def main(filename, framerate):
                 newcenter[j] /= len(step)
 
             scene.center = tuple( newcenter )
+
+        while len(v_points) > 0:
+            v_points[0].visible = False
+            v_points[0].trail_object.visible = False
+            del v_points[0]
 
 if __name__ == '__main__':
     from sys import argv
