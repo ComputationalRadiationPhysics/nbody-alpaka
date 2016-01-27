@@ -65,14 +65,14 @@ void runTest(std::size_t const NSize, std::size_t const NSteps)
 
 BOOST_AUTO_TEST_CASE( benchmark )
 {
-    runTest< 2,   float>(  128, 100 );
-    runTest< 2,   float>(  256, 100 );
-    runTest< 2,   float>(  512, 100 );
-    runTest< 2,   float>( 1024, 100 );
-    runTest< 3,   float>(  128, 100 );
-    runTest< 3,   float>(  256, 100 );
-    runTest< 3,   float>(  512, 100 );
-    runTest< 3,   float>( 1024, 100 );
+    for(int i=1 ; i <=32 ;i*=2)
+    {
+        runTest< 2,   float>(  i*128, 100 );
+    }
+    for(int i=1 ; i <=32 ;i*=2)
+    {
+        runTest< 3,   float>(  i*128, 100 );
+    }
 }
 
 /* BOOST_AUTO_TEST_CASE( simulationClass )
