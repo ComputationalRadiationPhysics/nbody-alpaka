@@ -61,7 +61,8 @@ public:
         typename TAcc,
         std::size_t NDim,
         typename TElem,
-        typename TSize >
+        typename TSize,
+        typename TFactor>
     ALPAKA_FN_ACC auto operator()(
         TAcc const & acc,
         types::Vector<NDim,TElem> const * const bodiesPosition,
@@ -71,7 +72,7 @@ public:
         TSize const & numBodies,
         // Wird von UpdatePositionsKernel genutzt
         // TElem const & gravitationalConstant,
-        TElem const & smoothnessFactor ) const
+        TFactor const & smoothnessFactor ) const
     -> void
     {
         static_assert(
@@ -215,7 +216,8 @@ struct BlockSharedMemDynSizeBytes<
     template<
         std::size_t NDim,
         typename TElem,
-        typename TSize>
+        typename TSize,
+        typename TFactor>
     ALPAKA_FN_HOST static auto getBlockSharedMemDynSizeBytes(
         alpaka::Vec<
             alpaka::dim::Dim< TAcc >,
@@ -233,7 +235,7 @@ struct BlockSharedMemDynSizeBytes<
         TSize const & numBodies,
         // Wird von UpdatePositionsKernel genutzt
         // TElem const & gravitationalConstant,
-        TElem const & smoothnessFactor )
+        TFactor const & smoothnessFactor )
     -> size::Size<TAcc>
     {
         // Ignore unused
