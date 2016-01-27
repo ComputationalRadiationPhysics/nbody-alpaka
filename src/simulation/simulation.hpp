@@ -8,7 +8,7 @@
 // Vector
 #include <simulation/types/vector.hpp> 
 
-#if defined(ALPAKA_ACC_GPU_CUDA_ENABLE)
+#if defined(ALPAKA_ACC_GPU_CUDA_ENABLED)
     #define ACC_FORCEM alpaka::acc::AccGpuCudaRt<alpaka::dim::DimInt<2u>,std::size_t>
     #define ACC_UPDATEP alpaka::acc::AccGpuCudaRt<alpaka::dim::DimInt<1u>,std::size_t>
     #define STREAM alpaka::stream::StreamCudaRtSync
