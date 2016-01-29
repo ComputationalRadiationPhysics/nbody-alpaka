@@ -163,7 +163,7 @@ public:
                     alpaka::Vec<
                         alpaka::dim::DimInt<2u>,
                         TSize
-                    >::ones(),
+                    >(4,4),
                     false,
                     alpaka::workdiv::GridBlockExtentSubDivRestrictions::
                     EqualExtent
