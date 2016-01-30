@@ -95,6 +95,7 @@ private:
     //flag if a new step had been done
     bool stepFlag = true;
 public:
+    std::size_t elements = 8; //Alpaka elements
     /**
      */
     Simulation(
@@ -163,7 +164,7 @@ public:
                     alpaka::Vec<
                         alpaka::dim::DimInt<2u>,
                         TSize
-                    >(4,4),
+                    >(this->elements,this->elements),
                     false,
                     alpaka::workdiv::GridBlockExtentSubDivRestrictions::
                     EqualExtent
