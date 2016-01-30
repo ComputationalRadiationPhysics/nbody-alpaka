@@ -35,6 +35,7 @@ public:
         std::size_t NDim,
         typename TElem,
         typename TSize,
+        typename TGrav,
         typename TTime
     >
     ALPAKA_FN_ACC auto operator()(
@@ -44,7 +45,7 @@ public:
 		types::Vector<NDim,TElem> * const bodiesVelocity,
         TSize const & pitchSizeForceMatrix,
         TSize const & numBodies,
-        float gravitationalConstant,
+        TGrav const & gravitationalConstant,
 		TTime const & dt
 		) const
 	->void
