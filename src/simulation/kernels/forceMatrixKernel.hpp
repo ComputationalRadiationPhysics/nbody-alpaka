@@ -17,7 +17,6 @@
 #include <stdio.h> // printf
 #include <alpaka/alpaka.hpp>
 #include <simulation/types/vector.hpp> // Vector
-#include <boost/core/ignore_unused.hpp> // boost::ignore_unused
 
 namespace nbody {
 
@@ -79,115 +78,70 @@ public:
                 alpaka::dim::Dim<TAcc>::value == 2,
                 "This kernel required 2-dimensional indices");
 
-        auto const blockSizeX(
-                alpaka::workdiv::getWorkDiv<
-                    alpaka::Block,
-                    alpaka::Threads>
-                    (acc)[0u]);
+        auto const threadElemExtent(
+                alpaka::workdiv::getWorkDiv<alpaka::Thread, alpaka::Elems>(acc));
 
-        auto const blockSizeY(
-                alpaka::workdiv::getWorkDiv<
-                    alpaka::Block,
-                    alpaka::Threads>
-                    (acc)[1u]);
-
-        char * const sharedMem(
-                alpaka::block::shared::dyn::getMem< char >(acc) );
-
-        types::Vector<NDim,TElem> * const sharedPositionInfluencing(
-                ( types::Vector<NDim,TElem> * )sharedMem);
-
-        types::Vector<NDim,TElem> * const sharedPositionInfluenced(
-                sharedPositionInfluencing + blockSizeX );
-
-        TElem * const sharedMassInfluencing(
-                ( TElem * ) (
-                sharedMem + (blockSizeX + blockSizeY) *
-                sizeof(types::Vector<NDim,TElem>)));
-
-        auto const blockBodyInfluencing(
-                alpaka::idx::getIdx< alpaka::Block, alpaka::Threads >
-                    ( acc )[ 0u ]);
-
-        auto const blockBodyInfluenced(
-                alpaka::idx::getIdx< alpaka::Block, alpaka::Threads >
-                    ( acc )[ 1u ]);
-
-        // The influencing body
-        auto const indexBodyInfluencing(
+        // Thread id
+        auto const gridThreadIdx(
                 alpaka::idx::getIdx< alpaka::Grid,alpaka::Threads >
-                    ( acc )[ 0u ]);
-        // The influenced body
-        auto const indexBodyInfluenced(
-                alpaka::idx::getIdx< alpaka::Grid,alpaka::Threads >
-                    ( acc )[ 1u ]);
+                    ( acc ));
 
-        // first Row fills shared mem for all rows
-        if(blockBodyInfluenced == 0) {
-            sharedPositionInfluencing[ blockBodyInfluencing ] =
-                bodiesPosition[ indexBodyInfluencing ];
-            sharedMassInfluencing[ blockBodyInfluencing ] =
-                bodiesMass[ indexBodyInfluencing ];
-        }
-
-        // first Col fills shared mem for all cols
-        if(blockBodyInfluencing == 0) {
-            sharedPositionInfluenced[ blockBodyInfluenced ] =
-                bodiesPosition[ indexBodyInfluenced ];
-        }
-
-        //Sync here to ensure that shared memory has been filled
-        alpaka::block::sync::syncBlockThreads(acc);
-
-        // Warning: The following is necessary as the pitchBytes may not be
-        // divisable by the size of Vector<NDim,TElem>. e.g. Vector<3,float>'s
-        // size is 12 bytes
-        types::Vector<NDim,TElem> * const matrixRow(
-            (types::Vector<NDim,TElem>*)(
-                (char*)forceMatrix +
-                indexBodyInfluenced * pitchBytesForceMatrix));
-
-        // Both exist?
-        if( indexBodyInfluencing >= numBodies ||
-                indexBodyInfluenced >= numBodies )
-            return;
-        // A body does not influence itself
-        else if( indexBodyInfluenced == indexBodyInfluencing )
+        for( TSize threadBodyInfluenced = 0,
+            indexBodyInfluenced = gridThreadIdx[1u] *
+            threadElemExtent[1u];
+            threadBodyInfluenced < threadElemExtent[ 1u ] && 
+            indexBodyInfluenced < numBodies;
+            threadBodyInfluenced++,
+            indexBodyInfluenced++)
         {
-            // forceMatrix[ matrixIdx ] =
-            matrixRow[indexBodyInfluencing] =
-                types::Vector<NDim,TElem>(0.0f);
-        }
-        // One body influences a different body
-        else
-        {
-            // position of influencing relative to influenced body
-            // ( direction of force )
-            types::Vector<NDim,TElem> const positionRelative(
-                    sharedPositionInfluencing[ blockBodyInfluencing ] -
-                    sharedPositionInfluenced[ blockBodyInfluenced ] );
+            // Warning: The following is necessary as the pitchBytes may
+            // not be divisable by the size of Vector<NDim,TElem>.
+            // e.g. Vector<3,float>'s size is 12 bytes
+            types::Vector<NDim,TElem> * const matrixRow(
+                (types::Vector<NDim,TElem>*)(
+                    (char*)forceMatrix +
+                    indexBodyInfluenced * pitchBytesForceMatrix));
 
-            // Distance squared + smoothnessFactor
-            auto const dist(
-                    positionRelative.absSq() +
-                    smoothnessFactor);
+            for( TSize threadBodyInfluencing = 0,
+                 indexBodyInfluencing = gridThreadIdx[0u] *
+                 threadElemExtent[0u];
+                 threadBodyInfluencing < threadElemExtent[0u] &&
+                 indexBodyInfluencing < numBodies;
+                 threadBodyInfluencing++,
+                 indexBodyInfluencing++)
+            {
 
-            auto const distCb(dist*dist*dist);
+                // position of influencing relative to influenced body
+                // ( direction of force )
+                types::Vector<NDim,TElem> const positionRelative(
+                        bodiesPosition[ indexBodyInfluencing ] -
+                        bodiesPosition[ indexBodyInfluenced ] );
 
-            auto const rdistCb(alpaka::math::rsqrt(acc,distCb));
-            // force scalar and normalizing factor
-            // force scalar * 1/(distance)
-            TElem const forceFactor(
-                    //This is handled by the UpdatePositionsKernel
-                    //gravitationalConstant *
-                    //bodiesMass[indexBodyInfluenced] *
-                    sharedMassInfluencing[blockBodyInfluencing] *
-                    rdistCb);
+                // Distance squared + smoothnessFactor
+                auto const dist(
+                        positionRelative.absSq() +
+                        smoothnessFactor);
 
-            auto const result = forceFactor * positionRelative;
+                auto const distCb(dist*dist*dist);
 
-            // Save value
-            matrixRow[indexBodyInfluencing] = result;
+                auto const rdistCb(alpaka::math::rsqrt(acc,distCb));
+                // force scalar and normalizing factor
+                // force scalar * 1/(distance)
+                TElem const forceFactor(
+                        //This is handled by the UpdatePositionsKernel
+                        //gravitationalConstant *
+                        //bodiesMass[indexBodyInfluenced] *
+                        bodiesMass[indexBodyInfluencing] *
+                        rdistCb);
+
+                auto const result = forceFactor * positionRelative;
+
+                // Save value
+                matrixRow[indexBodyInfluencing] = result;
+            }
+
+            matrixRow[indexBodyInfluenced] =
+                types::Vector<NDim, TElem>(static_cast<TElem>(0));
         }
     }
 };
@@ -198,63 +152,3 @@ public:
 
 } // namespace nbody
 
-/* Alpaka Shared Memory definition */
-
-namespace alpaka {
-
-namespace kernel {
-
-namespace traits {
-
-template<
-    typename TAcc>
-struct BlockSharedMemDynSizeBytes<
-    nbody::simulation::kernels::ForceMatrixKernel,
-    TAcc>
-{
-
-    template<
-        std::size_t NDim,
-        typename TElem,
-        typename TSize,
-        typename TFactor>
-    ALPAKA_FN_HOST static auto getBlockSharedMemDynSizeBytes(
-        alpaka::Vec<
-            alpaka::dim::Dim< TAcc >,
-            size::Size< TAcc > >
-            const & vblockThreadsExtents,
-        alpaka::Vec<
-            alpaka::dim::Dim< TAcc >,
-            size::Size< TAcc > >
-            const & threadElemExtent,
-        nbody::simulation::types::Vector<NDim,TElem>
-            const * const bodiesPosition,
-        TElem const * const bodiesMass,
-        nbody::simulation::types::Vector<NDim,TElem> * const forceMatrix,
-        TSize const & pitchBytesForceMatrix,
-        TSize const & numBodies,
-        // Wird von UpdatePositionsKernel genutzt
-        // TElem const & gravitationalConstant,
-        TFactor const & smoothnessFactor )
-    -> size::Size<TAcc>
-    {
-        // Ignore unused
-        boost::ignore_unused(threadElemExtent);
-        boost::ignore_unused(bodiesPosition);
-        boost::ignore_unused(bodiesMass);
-        boost::ignore_unused(forceMatrix);
-        boost::ignore_unused(pitchBytesForceMatrix);
-        boost::ignore_unused(numBodies);
-        boost::ignore_unused(smoothnessFactor);
-
-        return (vblockThreadsExtents[0u] + vblockThreadsExtents[1u]) *
-            sizeof(nbody::simulation::types::Vector<NDim,TElem>) +
-            vblockThreadsExtents[0u] * sizeof(TElem);
-    }
-};
-
-} // namespace traits
-
-} // namespace kernel
-
-} // namespace alpaka

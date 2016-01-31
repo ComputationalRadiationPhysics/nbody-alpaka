@@ -35,6 +35,7 @@ public:
         std::size_t NDim,
         typename TElem,
         typename TSize,
+        typename TGrav,
         typename TTime
     >
     ALPAKA_FN_ACC auto operator()(
@@ -44,7 +45,7 @@ public:
 		types::Vector<NDim,TElem> * const bodiesVelocity,
         TSize const & pitchSizeForceMatrix,
         TSize const & numBodies,
-        float gravitationalConstant,
+        TGrav const & gravitationalConstant,
 		TTime const & dt
 		) const
 	->void
@@ -60,16 +61,14 @@ public:
         auto const threadFirstElemIdx(gridThreadIdx *threadElemExtent);
 
     //Check if out of range
-        if(threadFirstElemIdx>=numBodies)
-            return;
+        // if(threadFirstElemIdx>=numBodies)
+        //     return;
 
     //Sum up the "forces"(accelerations/gravitationalConstant)
         //Calculate last element+1 
-        auto const threadLastElemIdxHelp(
-                threadElemExtent+threadFirstElemIdx);
-        auto const threadLastElemIdx(
-                (threadLastElemIdxHelp > numBodies) ? 
-                numBodies : threadLastElemIdxHelp);
+        auto const threadLastElemIdxHelp( threadElemExtent+threadFirstElemIdx );
+        auto const threadLastElemIdx( (threadLastElemIdxHelp < numBodies ) ?
+                threadLastElemIdxHelp : numBodies );
         for(TSize p(threadFirstElemIdx); p< threadLastElemIdx;p++)
         { 
         //calculate begin of line
@@ -78,16 +77,10 @@ public:
                         (char*)forceMatrix +
                         p * pitchSizeForceMatrix)
                     );
-
-            types::Vector<NDim,TElem> acceleration(static_cast<TElem>(0));
-            for(std::size_t i(0); i< numBodies;i++)
-            {
-                acceleration+=beginOfLine[i];
-            }
-            acceleration=acceleration*gravitationalConstant;
+            //acceleration/G is stored in first element of line
+            types::Vector<NDim,TElem> acceleration(beginOfLine[0]*gravitationalConstant);
             //calculate new position p=a/2*dt² +v*dt + p_0
-            bodiesPosition[p]+= (acceleration/(2)*dt+
-            bodiesVelocity[p])*dt;
+            bodiesPosition[p]+= (0.5f*acceleration*dt + bodiesVelocity[p])*dt;
             //calculate velocity v=a*dt
             bodiesVelocity[p]+=acceleration*dt;
 		

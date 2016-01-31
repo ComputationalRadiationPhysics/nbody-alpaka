@@ -14,11 +14,13 @@ using namespace nbody::simulation;
 template<
     std::size_t NDim,
     typename TElem>
-void runTest(std::size_t const NSize, std::size_t const NSteps)
+void runTest(std::size_t const NSize, std::size_t const NSteps,
+        std::size_t elements)
 {
     std::cout << NSize << " bodies with "<< NDim << "-dimensional " <<  
         boost::typeindex::type_id<TElem>().pretty_name() << 
-        " vectors for " << NSteps << " steps" << std::endl;
+        " vectors for " << NSteps << " steps. Elements per Thread: "
+        << elements << std::endl;
 
     types::Vector<NDim, TElem> * bodiesPosition =
         new types::Vector<NDim, TElem>[NSize];
@@ -47,6 +49,7 @@ void runTest(std::size_t const NSize, std::size_t const NSteps)
                 smoothnessFactor,
                 gravitationalConstant);
 
+    sim.elements = elements;
 
     std::chrono::high_resolution_clock::time_point start =
         std::chrono::high_resolution_clock::now();
@@ -65,11 +68,7 @@ void runTest(std::size_t const NSize, std::size_t const NSteps)
 }
 
 int main(void) {
-    for(std::size_t i = 128; i <= 2048; i*=2) {
-        runTest<2,float>(i,1000);
-    }
-
-    for(std::size_t i = 128; i <= 2048; i*=2) {
-        runTest<3,float>(i,1000);
+    for(std::size_t i = 1; i <=32; i*=2) {
+        runTest<2,float>(1<<15,1,i);
     }
 }

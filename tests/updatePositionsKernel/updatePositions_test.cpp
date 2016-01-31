@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE(updatePositions)
     bodiesPosition[1] =Vector{-1.0f,0.0f};
 
     Vector forceMatrix[4] = {
-        Vector{ 0.0f, 0.0f },
+        Vector{ 1.0f, 0.0f },
         Vector{ 1.0f,0.0f},
         Vector{-1.0,0.0f},
         Vector{0.0f,0.0f}
@@ -223,11 +223,8 @@ BOOST_AUTO_TEST_CASE(updatePositions)
     
     for(std::size_t i=0; i<numBodies; i++)
     {
-        Vector force(0.0f);
-        for(std::size_t j=0; j<numBodies;j++)
-        {
-            force+=forceMatrix[i*numBodies+j];
-        }
+        Vector force(forceMatrix[i*numBodies]);
+        
         force=force*gravitationalConstant;
         newPositions_test[i]= dt*(bodiesVelocity[i]+dt*force/2+bodiesPosition[i]);
     }
