@@ -66,9 +66,11 @@ public:
 
     //Sum up the "forces"(accelerations/gravitationalConstant)
         //Calculate last element+1 
+        // auto const threadLastElemIdxHelp( threadElemExtent+threadFirstElemIdx );
         auto const threadLastElemIdx(
-                alpaka::math::min(acc, numBodies,
-                    threadElemExtent+threadFirstElemIdx ));
+                alpaka::math::min(acc,
+                    static_cast<TSize>(numBodies),
+                    static_cast<TSize>(threadElemExtent+threadFirstElemIdx )));
         for(TSize p(threadFirstElemIdx); p< threadLastElemIdx;p++)
         { 
         //calculate begin of line
