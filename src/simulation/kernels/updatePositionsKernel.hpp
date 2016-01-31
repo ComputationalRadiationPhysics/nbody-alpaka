@@ -61,16 +61,14 @@ public:
         auto const threadFirstElemIdx(gridThreadIdx *threadElemExtent);
 
     //Check if out of range
-        if(threadFirstElemIdx>=numBodies)
-            return;
+        // if(threadFirstElemIdx>=numBodies)
+        //     return;
 
     //Sum up the "forces"(accelerations/gravitationalConstant)
         //Calculate last element+1 
-        auto const threadLastElemIdxHelp(
-                threadElemExtent+threadFirstElemIdx);
         auto const threadLastElemIdx(
-                (threadLastElemIdxHelp > numBodies) ? 
-                numBodies : threadLastElemIdxHelp);
+                alpaka::math::min(acc, numBodies,
+                    threadElemExtent+threadFirstElemIdx ));
         for(TSize p(threadFirstElemIdx); p< threadLastElemIdx;p++)
         { 
         //calculate begin of line
@@ -82,8 +80,7 @@ public:
             //acceleration/G is stored in first element of line
             types::Vector<NDim,TElem> acceleration(beginOfLine[0]*gravitationalConstant);
             //calculate new position p=a/2*dt² +v*dt + p_0
-            bodiesPosition[p]+= (acceleration/(2)*dt+
-            bodiesVelocity[p])*dt;
+            bodiesPosition[p]+= (0.5f*acceleration*dt + bodiesVelocity[p])*dt;
             //calculate velocity v=a*dt
             bodiesVelocity[p]+=acceleration*dt;
 		
