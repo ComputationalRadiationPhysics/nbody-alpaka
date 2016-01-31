@@ -1,11 +1,11 @@
 #pragma once
-#include <alpake/alpaka.hpp>
+#include <alpaka/alpaka.hpp>
 #include <simulation/types/vector.hpp>
 
 namespace nbody {
-namespace simulations {
+namespace simulation {
 namespace kernels{
-class addKernel
+class AddKernel
 {
 public:
     ALPAKA_NO_HOST_ACC_WARNING
@@ -13,13 +13,12 @@ public:
         typename TAcc,
         std::size_t NDim,
         typename TElem,
-        typename TSize,
-    >
+        typename TSize>
     ALPAKA_FN_ACC auto operator()(
-            TAcc cons &acc,
+            TAcc const & acc,
             types::Vector<NDim,TElem> const* const forceMatrix,
             TSize const & pitchSizeForceMatrix,
-            TSize const & numBodies,
+            TSize const & numBodies
             ) const
     ->void
     {
@@ -34,7 +33,7 @@ public:
         //num of threads in x
         auto const threadsInX= alpaka::workdiv::getWorkDiv<alpaka::Grid,alpaka::Threads>(acc)[1u];
         //num of Elmes per Thread in Y
-        auto const linesInThread= alpaka::workdiv::getWorkDiv<alpaka::Threads,alpaka::Elems>(acc)[0u];
+        auto const linesInThread= alpaka::workdiv::getWorkDiv<alpaka::Thread,alpaka::Elems>(acc)[0u];
         //first line
         auto const firstLine(threadIdY*linesInThread);
         auto const lastLineHelp(firstLine+linesInThread);
@@ -49,10 +48,11 @@ public:
                         (char*)forceMatrix +
                         line * pitchSizeForceMatrix)
                     );
-            beginOfLine[threadIdX]+=beginOfLine[threadIdX+threadsInX]
+            beginOfLine[threadIdX]+=beginOfLine[threadIdX+threadsInX];
         
         }
     }
-}
-}
-}
+};
+} // kernels
+} // simulation
+} // nbody

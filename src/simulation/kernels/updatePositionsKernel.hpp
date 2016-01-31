@@ -79,13 +79,8 @@ public:
                         (char*)forceMatrix +
                         p * pitchSizeForceMatrix)
                     );
-
-            types::Vector<NDim,TElem> acceleration(static_cast<TElem>(0));
-            for(std::size_t i(0); i< numBodies;i++)
-            {
-                acceleration+=beginOfLine[i];
-            }
-            acceleration=acceleration*gravitationalConstant;
+            //acceleration/G is stored in first element of line
+            types::Vector<NDim,TElem> acceleration(beginOfLine[0]*gravitationalConstant);
             //calculate new position p=a/2*dt² +v*dt + p_0
             bodiesPosition[p]+= (acceleration/(2)*dt+
             bodiesVelocity[p])*dt;

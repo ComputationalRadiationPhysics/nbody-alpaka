@@ -3,6 +3,8 @@
 #include <alpaka/alpaka.hpp>
 // ForceMatrixKernel
 #include <simulation/kernels/forceMatrixKernel.hpp>
+// AddKernel
+#include <simulation/kernels/addKernel.hpp>
 //updatePositionKernel
 #include <simulation/kernels/updatePositionsKernel.hpp>
 // Vector
@@ -191,7 +193,46 @@ public:
         
         alpaka::stream::enqueue( streamForceM, forceKernelExec);
         alpaka::wait::wait( streamForceM );
+        
+        /*** Execute addKernel ***/
+        unsigned int width(1);
+        while( width < numBodies ) width <<=1;
 
+        do {
+            width>>=1;
+
+            alpaka::Vec<alpaka::dim::DimInt<2u>,TSize>
+                extentWorkParallelAdd(numBodies,width);
+            auto const workDivAdd(
+                    alpaka::workdiv::getValidWorkDiv<ACC_FORCEM>(
+                        devAccForceM,
+                        extentWorkParallelAdd,
+                        alpaka::Vec<
+                            alpaka::dim::DimInt<2u>,
+                            TSize
+                        >(elements,1u),
+                        false,
+                        alpaka::workdiv::GridBlockExtentSubDivRestrictions::Unrestricted
+                    )
+            );
+            kernels::AddKernel addKernel;
+            auto const addKernelExec(
+                    alpaka::exec::create<ACC_FORCEM>(
+                        workDivAdd,
+                        addKernel,
+                        alpaka::mem::view::getPtrNative( accForceMatrix ),
+                        static_cast<TSize>(
+                            alpaka::mem::view::getPitchBytes<1u>
+                            (accForceMatrix)
+                        ),
+                        numBodies
+                        )
+            );
+
+            alpaka::stream::enqueue(streamForceM,addKernelExec);
+            alpaka::wait::wait(streamForceM);
+        } while(width>1);
+        
         /*** Execute updatePositionKernel ***/
         auto const workDivUpdatePositions(
                 alpaka::workdiv::getValidWorkDiv< ACC_UPDATEP >(
