@@ -241,7 +241,7 @@ public:
                     alpaka::Vec<
                         alpaka::dim::DimInt<1u>,
                         TSize
-                    >::ones(),
+                    >(this->elements),
                     false,
                     alpaka::workdiv::GridBlockExtentSubDivRestrictions::
                     Unrestricted
