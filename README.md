@@ -21,9 +21,6 @@ make
 # Visualize data
 python2 vision.py test.txt
 ```
-
-## Schedule (in german)
-We have our project schedule in markdown here: [Zeitplan](zeitplan.md)
 ## The team
 We are two students from the TU-Dresden and chose this project in the context of the module "Hochparallele Simulationsrechnungen mit CUDA und OpenCL" (eng. highly parallel calculations for simulations with CUDA and OpenCL).
 - Vincent Ridder, Informationssystemtechnik (mixed studies of EE and CS)
