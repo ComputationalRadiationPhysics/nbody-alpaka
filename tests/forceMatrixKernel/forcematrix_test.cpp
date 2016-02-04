@@ -91,9 +91,9 @@ createForceMatrix(
             alpaka::Vec<
                 alpaka::dim::DimInt<2u>,
                 Size
-            >::ones(),
+            >(2,2),
             false,
-            alpaka::workdiv::GridBlockExtentSubDivRestrictions::Unrestricted
+            alpaka::workdiv::GridBlockExtentSubDivRestrictions::EqualExtent
         )
     );
 
@@ -245,6 +245,7 @@ BOOST_AUTO_TEST_CASE( forceMatrix2D )
 
     for( std::size_t i(0); i < 2*2; i++ )
     {
+        std::cout << i << ": " <<forceMatrix[i] << " should be " << forceMatrixResult[i] << std::endl;
         BOOST_CHECK( forceMatrix[i] == forceMatrixResult[i] );
     }
 
@@ -343,5 +344,38 @@ BOOST_AUTO_TEST_CASE( forceMatrix3D )
         BOOST_CHECK( forceMatrix[i] == forceMatrixResult[i] );
     }
 #endif
+
+}
+
+BOOST_AUTO_TEST_CASE( zeroMass )
+{
+    printf("-- Test calculation with zero mass bodies\n");
+    std::size_t const N = 40;
+    using Vector2F = Vector<2,float>;
+    Vector2F bodiesPosition[N];
+    float bodiesMass[N];
+    for(std::size_t i = 0; i < N; i++) {
+        bodiesPosition[i] = Vector2F{i*1.0f, 0.0f};
+        bodiesMass[i] = 0.0f;
+    }
+    
+
+    printf("Test with CPU\n");
+    Vector2F* forceMatrix = createForceMatrix<
+        alpaka::acc::AccCpuOmp2Threads<
+            alpaka::dim::DimInt<2u>,
+            std::size_t >,
+        alpaka::stream::StreamCpuSync
+    >(
+            bodiesPosition,
+            bodiesMass,
+            N,
+            0.0f);
+
+
+    for( std::size_t i(0); i < N*N; i++ )
+    {
+        BOOST_CHECK( forceMatrix[i] == Vector2F(0.0f) );
+    }
 
 }
