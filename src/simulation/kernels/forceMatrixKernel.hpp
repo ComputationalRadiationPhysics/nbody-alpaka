@@ -86,9 +86,9 @@ public:
                     (acc));
 
         auto const threadElemExtent(
-                alpaka::workdiv::getWorkDiv<alpaka::Thread, alpaka::Elems>(acc));
+                alpaka::workdiv::getWorkDiv<alpaka::Thread, alpaka::Elems>
+                    (acc));
 
-        //TODO: change address calculations
         char * const sharedMem(
                 alpaka::block::shared::dyn::getMem< char >(acc) );
 
@@ -115,48 +115,61 @@ public:
                 alpaka::idx::getIdx< alpaka::Grid,alpaka::Threads >
                     ( acc ));
 
+        auto const gridFirstInfluenced(
+                gridThreadIdx[ 0u ] * threadElemExtent[ 0u ]);
+
+        auto const gridFirstInfluencing(
+                gridThreadIdx[ 1u ] * threadElemExtent[ 1u ]);
+
+        if(gridFirstInfluenced > numBodies || gridFirstInfluencing > numBodies)
+            return;
+
+        auto const threadExtentInfluenced(
+            (gridFirstInfluenced + threadElemExtent[ 0u ] > numBodies) ?
+                numBodies - gridFirstInfluenced : threadElemExtent[ 0u ] );
+
+        auto const threadExtentInfluencing(
+            (gridFirstInfluencing + threadElemExtent[ 1u ] > numBodies) ?
+                numBodies - gridFirstInfluencing : threadElemExtent[ 1u ] );
+
+        auto const blockFirstInfluenced(
+                blockThreadIdx[ 0u ] * threadElemExtent[ 0u ]);
+
+        auto const blockFirstInfluencing(
+                blockThreadIdx[ 1u ] * threadElemExtent[ 0u ]);
+
         // first Row fills shared mem for all rows
-        if(blockThreadIdx[0u] == 0) {
-            for( TSize threadBodyInfluencing = 0,
-                 indexBodyInfluencing = gridThreadIdx[0u] *
-                 threadElemExtent[0u];
-                 threadBodyInfluencing < threadElemExtent[0u] &&
-                 indexBodyInfluencing < numBodies;
-                 threadBodyInfluencing++,
-                 indexBodyInfluencing++)
-            {
-                sharedPositionInfluencing[ threadBodyInfluencing ] =
-                    bodiesPosition[ indexBodyInfluencing ];
-                sharedMassInfluencing[ threadBodyInfluencing ] =
-                    bodiesMass[ indexBodyInfluencing ];
-            }
+        for( TSize threadBodyInfluencing = blockThreadIdx[ 0u ];
+             threadBodyInfluencing < threadExtentInfluencing;
+             threadBodyInfluencing+=blockSize[ 0u ])
+        {
+            sharedPositionInfluencing[ blockFirstInfluencing +
+                threadBodyInfluencing ] =
+                    bodiesPosition[ gridFirstInfluencing +
+                        threadBodyInfluencing ];
+            sharedMassInfluencing[ blockFirstInfluencing +
+                threadBodyInfluencing ] =
+                    bodiesMass[ gridFirstInfluencing +
+                        threadBodyInfluencing ];
         }
 
         // first Col fills shared mem for all cols
-        if(blockThreadIdx[ 0u ] == 0) {
-            for( TSize threadBodyInfluenced = 0,
-                indexBodyInfluenced = gridThreadIdx[1u] *
-                threadElemExtent[1u];
-                threadBodyInfluenced < threadElemExtent[ 1u ] && 
-                indexBodyInfluenced < numBodies;
-                threadBodyInfluenced++,
-                indexBodyInfluenced++)
-            {
-                sharedPositionInfluenced[ threadBodyInfluenced ] =
-                    bodiesPosition[ indexBodyInfluenced ];
-            }
+        for( TSize threadBodyInfluenced = blockThreadIdx[ 1u ];
+            threadBodyInfluenced < threadExtentInfluenced;
+            threadBodyInfluenced+=blockSize[ 1u ])
+        {
+            sharedPositionInfluenced[ blockFirstInfluenced +
+                threadBodyInfluenced ] =
+                    bodiesPosition[ gridFirstInfluenced +
+                        threadBodyInfluenced ];
         }
 
         //Sync here to ensure that shared memory has been filled
         alpaka::block::sync::syncBlockThreads(acc);
 
-        for( TSize threadBodyInfluenced = 0,
-            indexBodyInfluenced = gridThreadIdx[1u] *
-            threadElemExtent[1u];
-            threadBodyInfluenced < threadElemExtent[ 1u ] && 
-            indexBodyInfluenced < numBodies;
-            threadBodyInfluenced++,
-            indexBodyInfluenced++)
+        for( TSize threadBodyInfluenced = 0;
+            threadBodyInfluenced < threadExtentInfluenced;
+            threadBodyInfluenced++)
         {
             // Warning: The following is necessary as the pitchBytes may
             // not be divisable by the size of Vector<NDim,TElem>.
@@ -164,48 +177,49 @@ public:
             types::Vector<NDim,TElem> * const matrixRow(
                 (types::Vector<NDim,TElem>*)(
                     (char*)forceMatrix +
-                    indexBodyInfluenced * pitchBytesForceMatrix));
+                    (gridFirstInfluenced + threadBodyInfluenced) *
+                        pitchBytesForceMatrix));
 
-            for( TSize threadBodyInfluencing = 0,
-                 indexBodyInfluencing = gridThreadIdx[0u] *
-                 threadElemExtent[0u];
-                 threadBodyInfluencing < threadElemExtent[0u] &&
-                 indexBodyInfluencing < numBodies;
-                 threadBodyInfluencing++,
-                 indexBodyInfluencing++)
+            for( TSize threadBodyInfluencing = 0;
+                 threadBodyInfluencing < threadExtentInfluencing;
+                 threadBodyInfluencing++)
             {
+                types::Vector<NDim,TElem> result;
+                if(gridFirstInfluenced + threadBodyInfluenced ==
+                        gridFirstInfluencing + threadBodyInfluencing) {
+                    result = types::Vector<NDim,TElem>(
+                            static_cast<TElem>(0));
+                } else {
+                    // position of influencing relative to influenced body
+                    // ( direction of force )
+                    types::Vector<NDim,TElem> const positionRelative(
+                            sharedPositionInfluencing[ blockFirstInfluencing +
+                                threadBodyInfluencing ] -
+                            sharedPositionInfluenced[ blockFirstInfluenced + 
+                                threadBodyInfluenced ] );
 
-                // position of influencing relative to influenced body
-                // ( direction of force )
-                types::Vector<NDim,TElem> const positionRelative(
-                        sharedPositionInfluencing[ threadBodyInfluencing ] -
-                        sharedPositionInfluenced[ threadBodyInfluenced ] );
+                    // Distance squared + smoothnessFactor
+                    auto const dist(
+                            positionRelative.absSq() +
+                            smoothnessFactor);
 
-                // Distance squared + smoothnessFactor
-                auto const dist(
-                        positionRelative.absSq() +
-                        smoothnessFactor);
+                    auto const distCb(dist*dist*dist);
 
-                auto const distCb(dist*dist*dist);
+                    auto const rdistCb(alpaka::math::rsqrt(acc,distCb));
+                    // force scalar and normalizing factor
+                    // force scalar * 1/(distance)
+                    TElem const forceFactor(
+                            sharedMassInfluencing[threadBodyInfluencing] *
+                            rdistCb);
 
-                auto const rdistCb(alpaka::math::rsqrt(acc,distCb));
-                // force scalar and normalizing factor
-                // force scalar * 1/(distance)
-                TElem const forceFactor(
-                        //This is handled by the UpdatePositionsKernel
-                        //gravitationalConstant *
-                        //bodiesMass[indexBodyInfluenced] *
-                        sharedMassInfluencing[threadBodyInfluencing] *
-                        rdistCb);
-
-                auto const result = forceFactor * positionRelative;
+                    result = forceFactor * positionRelative;
+                }
 
                 // Save value
-                matrixRow[indexBodyInfluencing] = result;
+                matrixRow[ gridFirstInfluencing + threadBodyInfluencing ] =
+                    result;
             }
 
-            matrixRow[indexBodyInfluenced] =
-                types::Vector<NDim,TElem>(static_cast<TElem>(0.0f));
         }
     }
 };
@@ -268,7 +282,7 @@ struct BlockSharedMemDynSizeBytes<
         return (vblockThreadsExtents[0u] * threadElemExtent[0u] +
                 vblockThreadsExtents[1u] * threadElemExtent[1u]) *
             sizeof(nbody::simulation::types::Vector<NDim,TElem>) +
-            vblockThreadsExtents[0u] * threadElemExtent[0u] * sizeof(TElem);
+            vblockThreadsExtents[1u] * threadElemExtent[1u] * sizeof(TElem);
     }
 };
 
