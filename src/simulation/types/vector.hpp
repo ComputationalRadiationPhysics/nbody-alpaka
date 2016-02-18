@@ -37,7 +37,7 @@ template<
     std::size_t NDim,
     typename TElem
 >
-class Vector
+class __align__(16) Vector
 {
     static_assert( NDim > 0 , "The Vector must atleast have one dimension." );
 private:
