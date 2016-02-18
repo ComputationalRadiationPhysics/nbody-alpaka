@@ -68,7 +68,5 @@ void runTest(std::size_t const NSize, std::size_t const NSteps,
 }
 
 int main(void) {
-    for(std::size_t i = 1; i <=32; i*=2) {
-        runTest<2,float>(1<<15,1,i);
-    }
+    runTest<2,float>(512,1,1);
 }
