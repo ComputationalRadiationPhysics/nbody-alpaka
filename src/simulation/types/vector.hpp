@@ -64,6 +64,7 @@ public:
     ALPAKA_FN_ACC
     Vector(const TElem initialElement)
     {
+#pragma unroll
         for( std::size_t i = 0; i < NDim; i++ )
         {
             this->coord[ i ] = initialElement;
@@ -82,6 +83,7 @@ public:
     ALPAKA_FN_ACC
     Vector( const TElem initialData[ NDim ] )
     {
+#pragma unroll
         for( std::size_t i = 0; i < NDim; i++ )
         {
             this->coord[ i ] = initialData[ i ];
@@ -107,9 +109,9 @@ public:
     {
         assert( initialData.size() == NDim );
         // std::copy( initialData.begin(), initialData.end(), this->coord );
-        std::size_t index = 0;
         auto iter = initialData.begin();
-        for(;iter < initialData.end();
+#pragma unroll
+        for(std::size_t index(0); index < NDim;
                 iter++, index++)
         {
             this->coord[ index ] = *iter;
@@ -129,6 +131,7 @@ public:
     -> decltype( sqrt( coord[0] ) )
     {
         TElem len = 0;
+#pragma unroll
         for( std::size_t index = 0; index < NDim; index++ )
         {
             len += this->coord[ index ] * this->coord[ index ];
@@ -144,6 +147,7 @@ public:
     operator=( Vector<NDim,TElemOther> const & other )
     -> Vector< NDim, TElem >&
     {
+#pragma unroll
         for(std::size_t index = 0; index < NDim; index++) {
             this->coord[ index ] = (TElem) other[ index ];
         }
@@ -167,6 +171,7 @@ public:
     -> Vector<NDim, decltype( coord[0]/other ) >
     {
         Vector< NDim, decltype( coord[0]/other ) > result;
+#pragma unroll
         for( std::size_t index = 0; index < NDim; index++ )
         {
             result[ index ] = this->coord[ index ] / other;
@@ -191,6 +196,7 @@ public:
     -> Vector<NDim, decltype( coord[0] + other[0] ) >
     {
         Vector< NDim, decltype( coord[0] + other[0] ) > result;
+#pragma unroll
         for( std::size_t i = 0 ; i < NDim ; i++ ) {
             result[ i ] = this->coord[ i ] + other[ i ];
         }
@@ -213,6 +219,7 @@ public:
     operator+= ( Vector< NDim, TElemOther > const other )
     -> Vector<NDim, TElem>&
     {
+#pragma unroll
         for( std::size_t i = 0; i < NDim; i++ ) {
             this->coord[ i ] = ( TElem )( this->coord[ i ] + other[ i ] );
         }
@@ -239,6 +246,7 @@ public:
     >
     {
         Vector< NDim, decltype( coord[0] - other[0] ) > result;
+#pragma unroll
         for(std::size_t i = 0; i < NDim; i++)
         {
             result[ i ] = this->coord[ i ] - other[ i ];
@@ -262,6 +270,7 @@ public:
     >
     {
         Vector< NDim , TElem > result;
+#pragma unroll
         for( std::size_t i = 0; i < NDim; i++ )
         {
             result[i] = - this->coord[ i ];
@@ -288,6 +297,7 @@ public:
     >
     {
         Vector< NDim , decltype( factor * coord[0] ) > result;
+#pragma unroll
         for( std::size_t i = 0; i < NDim; i++ ) {
             result[i] = this->coord[ i ] * factor;
         }
@@ -306,7 +316,7 @@ public:
     TElem&
     operator[]( std::size_t const index )
     {
-        assert( index < NDim );
+        //assert( index < NDim );
         return this->coord[ index ];
     }
 
@@ -321,7 +331,7 @@ public:
     const TElem
     operator[]( std::size_t const index ) const
     {
-        assert( index < NDim );
+        //assert( index < NDim );
         return this->coord[ index ];
     }
 };
