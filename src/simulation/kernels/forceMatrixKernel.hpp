@@ -185,34 +185,35 @@ public:
                  threadBodyInfluencing++)
             {
                 types::Vector<NDim,TElem> result;
+
+                // position of influencing relative to influenced body
+                // ( direction of force )
+                types::Vector<NDim,TElem> const positionRelative(
+                        sharedPositionInfluencing[ blockFirstInfluencing +
+                            threadBodyInfluencing ] -
+                        sharedPositionInfluenced[ blockFirstInfluenced +
+                            threadBodyInfluenced ] );
+
+                // Distance squared + smoothnessFactor
+                auto const dist(
+                        positionRelative.absSq() +
+                        smoothnessFactor);
+
+                auto const distCb(dist*dist*dist);
+
+                auto const rdistCb(alpaka::math::rsqrt(acc,distCb));
+                // force scalar and normalizing factor
+                // force scalar * 1/(distance)
+                TElem const forceFactor(
+                        sharedMassInfluencing[threadBodyInfluencing] *
+                        rdistCb);
+
+                result = forceFactor * positionRelative;
+
                 if(gridFirstInfluenced + threadBodyInfluenced ==
                         gridFirstInfluencing + threadBodyInfluencing) {
                     result = types::Vector<NDim,TElem>(
                             static_cast<TElem>(0));
-                } else {
-                    // position of influencing relative to influenced body
-                    // ( direction of force )
-                    types::Vector<NDim,TElem> const positionRelative(
-                            sharedPositionInfluencing[ blockFirstInfluencing +
-                                threadBodyInfluencing ] -
-                            sharedPositionInfluenced[ blockFirstInfluenced + 
-                                threadBodyInfluenced ] );
-
-                    // Distance squared + smoothnessFactor
-                    auto const dist(
-                            positionRelative.absSq() +
-                            smoothnessFactor);
-
-                    auto const distCb(dist*dist*dist);
-
-                    auto const rdistCb(alpaka::math::rsqrt(acc,distCb));
-                    // force scalar and normalizing factor
-                    // force scalar * 1/(distance)
-                    TElem const forceFactor(
-                            sharedMassInfluencing[threadBodyInfluencing] *
-                            rdistCb);
-
-                    result = forceFactor * positionRelative;
                 }
 
                 // Save value
