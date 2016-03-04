@@ -67,10 +67,10 @@ public:
     ALPAKA_FN_ACC auto operator()(
         TAcc const & acc,
         types::Vector<NDim,TElem> * const bodiesPosition,
-        types::Vector<NDim-1,TElem> * const bodiesVelocitys,
+        types::Vector<NDim-1,TElem> * const bodiesVelocity,
         TSize const & numBodies,
         TElem const & gravitationalConstant,
-        TFactor const & smoothnessFactor
+        TFactor const & smoothnessFactor,
         TTime &dt) const
     -> void
     {
@@ -82,7 +82,7 @@ public:
                 alpaka::workdiv::getWorkDiv<
                     alpaka::Block,
                     alpaka::Threads>
-                    (acc));
+                    (acc)[0u]);
 
         char * const sharedMem(
                 alpaka::block::shared::dyn::getMem< char >(acc) );
@@ -93,14 +93,14 @@ public:
 
         auto const blockThreadIdx(
                 alpaka::idx::getIdx< alpaka::Block, alpaka::Threads >
-                    ( acc ));
+                    ( acc )[0u]);
 
         auto const gridThreadIdx(
                 alpaka::idx::getIdx< alpaka::Grid,alpaka::Threads >
-                    ( acc ));
+                    ( acc )[0u]);
         
-        auto const myPosition(bodiesPosition[gridThreadIdx]);
-        auto const myVelocity(bodiesVelocity[gridThreadIdx]);
+        auto myPosition(bodiesPosition[gridThreadIdx]);
+        auto myVelocity(bodiesVelocity[gridThreadIdx]);
         types::Vector<NDim-1,TElem> myAcceleration=types::Vector<NDim-1,TElem>(static_cast<TElem>(0));
         
         // Each thread in blocks load one Position for per tile in shared memory 
@@ -119,9 +119,9 @@ public:
                 {
                     r[j]=b[j]-myPosition[j];
                 }
-                TElem bMass =b[NDim];
+                TElem bMass =b[NDim-1];
                 TElem distSqr =r.absSq()+smoothnessFactor;
-                TElem distSixth = distSquare*distSquar*distSquare;
+                TElem distSixth = distSqr*distSqr*distSqr;
                 TElem invDistCube = alpaka::math::rsqrt(acc,distSixth);
                 myAcceleration+=invDistCube*bMass*r;
             }
@@ -129,17 +129,16 @@ public:
         }
         
         //Update Position and Velocity
-        
-        myVelocity+=dt*myAcceleration;
+        myVelocity+=dt*gravitationalConstant*myAcceleration;
         #pragma unroll
         for( TSize i(0); i<NDim-1;i++)
         {
-             myPosition[i]=myVelocity[i]*dt;
+             myPosition[i]+=myVelocity[i]*dt;
         }
 
         //writeback to global
-        bodiesPosition[gridThreadId]=myPosition;
-        bodiesVelocity[gridThreadId]=myVelocity;
+        bodiesPosition[gridThreadIdx]=myPosition;
+        bodiesVelocity[gridThreadIdx]=myVelocity;
     }
 };
 }// end namespace kernels
@@ -154,33 +153,38 @@ namespace alpaka
         {
             template<
                 typename TAcc
-            > struct BlockSharedMemSizeBytes<
+            > struct BlockSharedMemDynSizeBytes<
                 nbody::simulation::kernels::NBodyKernel,
                 TAcc>
             {
                 template<
+                    typename TVec,
                     std::size_t NDim,
                     typename TElem,
-                    typename... TArgs>
+                    typename TSize,
+                    typename TFactor,
+                    typename TTime>
                 ALPAKA_FN_HOST static auto getBlockSharedMemDynSizeBytes(
-
-                    alpaka::Vec<
-                        alpaka::dim::Dim<TAcc>,
-                        size::Size<Tacc>>
-                        const & vblockThreadsExtents,
-
-                    alpaka::Vec<
-                        alpaka::dim::Dim<TAcc>,
-                        size::Size<TAcc> >
-                        const & threadElemExtent,
-                    
-                    nbody::simulation::types::Vector<NDim,TElem>
-                        *const bodiesPosition,
-                    TArgs && ...)
+                    nbody::simulation::kernels::NBodyKernel const & nBodyKernel,   
+                    TVec const & blockThreadsExtents,
+                    TVec const & threadElemExtent,
+                    nbody::simulation::types::Vector<NDim,TElem> * const bodiesPosition,
+                    nbody::simulation::types::Vector<NDim-1,TElem> * const bodiesVelocity,
+                    TSize const & numBodies,
+                    TElem const & gravitationalConstant,
+                    TFactor const & smoothnessFactor,
+                    TTime &dt) 
                 -> std::uint32_t
                 {
-                    return vblockThreadsExtend[0u]*threadElemExtend[0u]
-                        *sizeof(types::Vector<NDim,TElem>);
+                    boost::ignore_unused(nBodyKernel);
+                    boost::ignore_unused(bodiesPosition);
+                    boost::ignore_unused(bodiesVelocity);
+                    boost::ignore_unused(numBodies);
+                    boost::ignore_unused(gravitationalConstant);
+                    boost::ignore_unused(smoothnessFactor);
+                    boost::ignore_unused(dt);
+                    return blockThreadsExtents[0u]*threadElemExtent[0u]
+                        *sizeof(nbody::simulation::types::Vector<NDim,TElem>);
                 }
             };
         }
