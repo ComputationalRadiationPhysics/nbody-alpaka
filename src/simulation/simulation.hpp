@@ -2,7 +2,6 @@
 
 #include <alpaka/alpaka.hpp>
 #include <simulation/kernels/nBodyKernel.hpp>
-#include <simulation/kernels/updatePositionsKernel.hpp>
 // Vector
 #include <simulation/types/vector.hpp> 
 
