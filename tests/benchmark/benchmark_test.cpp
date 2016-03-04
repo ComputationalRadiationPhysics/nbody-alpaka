@@ -22,29 +22,26 @@ void runTest(std::size_t const NSize, std::size_t const NSteps,
         " vectors for " << NSteps << " steps. Elements per Thread: "
         << elements << std::endl;
 
-    types::Vector<NDim, TElem> * bodiesPosition =
-        new types::Vector<NDim, TElem>[NSize];
+    types::Vector<NDim+1, TElem> * bodiesPosition =
+        new types::Vector<NDim+1, TElem>[NSize];
     types::Vector<NDim, TElem> * bodiesVelocity =
         new types::Vector<NDim, TElem>[NSize];
-    TElem * bodiesMass = new TElem[NSize];
 
     for(std::size_t i = 0; i < NSize; i++) {
-        bodiesPosition[i] = types::Vector<NDim,TElem>( static_cast<TElem>(0) );
+        bodiesPosition[i] = types::Vector<NDim+1,TElem>( static_cast<TElem>(0) );
         bodiesVelocity[i] = types::Vector<NDim,TElem>( static_cast<TElem>(0) );
-        bodiesMass[i] = static_cast<TElem>(0);
     }
 
     float const smoothnessFactor = 1e-8;
     float const gravitationalConstant = 1.0f;
 
     Simulation<
-        NDim,
+        NDim+1,
         TElem,
         float,
         std::size_t> sim(
                 bodiesPosition,
                 bodiesVelocity,
-                bodiesMass,
                 NSize,
                 smoothnessFactor,
                 gravitationalConstant);
@@ -64,9 +61,8 @@ void runTest(std::size_t const NSize, std::size_t const NSteps,
 
     delete[] bodiesPosition;
     delete[] bodiesVelocity;
-    delete[] bodiesMass;
 }
 
 int main(void) {
-    runTest<2,float>(512,1,1);
+    runTest<2,float>(1024,1,1);
 }
